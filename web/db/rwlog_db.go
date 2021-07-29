@@ -16,7 +16,7 @@ const (
 	Rwlogs_isadd_ABADON_TASK_ZB_OFFLINE        int = 6
 	Rwlogs_isadd_ABADON_TASK_OFF_LINE          int = 7
 	Rwlogs_isadd_ABADON_TASK_LEAVE             int = 8
-	Rwlogs_isadd_ALLREADYDONE                  int = 9
+	Rwlogs_isadd_ALLREADY_DONE                 int = 9
 )
 
 type Rwlogs struct {
@@ -26,15 +26,15 @@ type Rwlogs struct {
 	Userid int    `gorm:"column:userid" json:"userid" form:"userid"`
 	Zbid   string `gorm:"column:zbid" json:"zbid" form:"zbid"`
 
-	//1：领取任务
-	// 2：完成挂机任务
-	// 3：完成送礼任务
-	// 4：放弃任务，进不去
-	// 5：放弃任务，送礼失败
-	// 6：放弃任务，没开播
-	// 7：放弃任务，不在线
-	// 8：放弃任务，中途离开直播间
-	// 9：已经做过
+	// 1: 领取任务
+	// 2: 完成挂机任务
+	// 3: 完成送礼任务
+	// 4: 放弃任务，进不去
+	// 5: 放弃任务，送礼失败
+	// 6: 放弃任务，没开播
+	// 7: 放弃任务，不在线
+	// 8: 放弃任务，中途离开直播间
+	// 9: 已经做过
 	Isadd int `gorm:"column:isadd" json:"isadd" form:"isadd"`
 
 	Day time.Time `gorm:"column:day" json:"day" form:"day"`
@@ -57,6 +57,14 @@ func GetRwlogsByID(id int) (*Rwlogs, error) {
 	db := global.MYSQL
 	o := &Rwlogs{}
 	err := db.Table("rwlogs").Where("id = ?", id).First(o).Error
+	return o, err
+}
+
+// GetRwlogsByruandyonghuid 根据wrid wid查询一个
+func GetRwlogsByruandyonghuid(uid, rid int) (*Rwlogs, error) {
+	db := global.MYSQL
+	o := &Rwlogs{}
+	err := db.Table("rwlogs").Where("uid = ? and rid = ? ", uid, rid).First(o).Error
 	return o, err
 }
 

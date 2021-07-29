@@ -154,3 +154,12 @@ func CountYonghu(o *Yonghu) (int, error) {
 	err := db.Table("yonghu").Where(o).Count(&count).Error
 	return count, err
 }
+
+///////
+// ListYonghuBySuper ListYonghuBySuper
+func ListYonghuBySuper(super string) ([]*Yonghu, error) {
+	db := global.MYSQL
+	res := make([]*Yonghu, 0)
+	err := db.Table("yonghu").Where("guishu = ?", super).Find(&res).Error
+	return res, err
+}

@@ -2,6 +2,10 @@ package db
 
 import "database/sql"
 
+/////////////////READMD
+
+// 通过结构体变量更新字段值, gorm库会忽略零值字段。就是字段值等于0, nil, "", false这些值会被忽略掉，不会更新。如果想更新零值，可以使用map类型替代结构体
+
 // DataStore list的结构体
 type DataStore struct {
 	Total     int         `json:"total"`

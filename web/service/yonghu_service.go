@@ -48,6 +48,25 @@ func YonghuGetRenwu(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// 设备获取到任务后设置用户信息rid rwjd=1 rwkstime=任务领取时间
+	user.Rwjd = 1
+	user.Rwkstime = int(time.Now().Unix())
+	uy, err := json.Marshal(user)
+	if err != nil {
+		return nil, err
+	}
+	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, user.Uid), string(uy))
+	if err != nil {
+		return nil, err
+	}
+	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token), string(uy))
+	if err != nil {
+		return nil, err
+	}
+	manager.addUpdate(user)
+
+	/// / response
 	res.Code = 1
 	res.Lx = renwu.Leixing
 	res.Dzcs = renwu.Dzcs
@@ -107,12 +126,13 @@ func YonghuAddRenwu(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	user.Rid = renwu.Rid
 
 	// num--
 	renwu.Shengyusl = renwu.Shengyusl - 1
 
 	if renwu.Shengyusl > 0 {
-		// 1. update to redis
+		// 1.1 update to redis renwu
 		rb, err := json.Marshal(renwu)
 		if err != nil {
 			return nil, err
@@ -121,15 +141,31 @@ func YonghuAddRenwu(req *db.RenwuRequest) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-	} else if renwu.Shengyusl <= 0 {
-		_, err = conn.Do("del", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, renwu.Rid))
+		// 1.2 user
+		uy, err := json.Marshal(user)
 		if err != nil {
 			return nil, err
 		}
+		_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, user.Uid), string(uy))
+		if err != nil {
+			return nil, err
+		}
+		_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token), string(uy))
+		if err != nil {
+			return nil, err
+		}
+	} else if renwu.Shengyusl < 0 {
+		// _, err = conn.Do("del", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, renwu.Rid))
+		// if err != nil {
+		// 	return nil, err
+		// }
+
+		return nil, errors.New("暂无任务")
 	}
 
 	// 2. mysql
-	manager.update <- renwu
+	manager.addUpdate(renwu)
+	manager.addUpdate(user)
 
 	// 记录任务添加历史记录
 	txlog := db.Rwlogs{
@@ -140,7 +176,7 @@ func YonghuAddRenwu(req *db.RenwuRequest) (interface{}, error) {
 		Isadd:  db.Rwlogs_isadd_GET_TASK,
 		Day:    time.Now(),
 	}
-	manager.create <- &txlog
+	manager.addCreate(&txlog)
 
 	return nil, nil
 
@@ -255,6 +291,7 @@ func LoginUser(req *db.YonghuRequest) (interface{}, error) {
 		return nil, err
 	}
 
+	manager.addCreate(y)
 	tx.Commit()
 
 	// 响应

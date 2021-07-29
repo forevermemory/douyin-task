@@ -26,19 +26,21 @@ type RenwuResponse struct {
 	Gsfsp int    `json:"gsfsp"`
 }
 type RenwuRequest struct {
-	ID int
+	ID int `json:"ID" form:"ID"`
 
 	Dzcs int `gorm:"column:dzcs" json:"dzcs" form:"dzcs"` //点赞次数
 
 	Rwmoney int `json:"rwmoney" form:"rwmoney"` //任务单价
-	Sfsl    int ` json:"sfsl" form:"sfsl"`      //任务权重 1=送礼物的任务 0=不送礼物的任务
-	Sfgj    int ` json:"sfgj" form:"sfgj"`      //0=不挂机任务 1=挂机任务
-	Rjbbh   int ` json:"rjbbh" form:"rjbbh"`    //任务限制-软件版本号
-	Xtbbh   int ` json:"xtbbh" form:"xtbbh"`    //任务限制-系统版本号
-	Zbid    int ` json:"zbid" form:"zbid"`      //直播id
-	Userid  int ` json:"userid" form:"userid"`  //直播id
+	Sfsl    int `json:"sfsl" form:"sfsl"`       //任务权重 1=送礼物的任务 0=不送礼物的任务
+	Sfgj    int `json:"sfgj" form:"sfgj"`       //0=不挂机任务 1=挂机任务
+	Rjbbh   int `json:"rjbbh" form:"rjbbh"`     //任务限制-软件版本号
+	Xtbbh   int `json:"xtbbh" form:"xtbbh"`     //任务限制-系统版本号
+	Zbid    int `json:"zbid" form:"zbid"`       //直播id
+	Userid  int `json:"userid" form:"userid"`   //直播id
 
-	Token string ` json:"token" form:"token"`
+	Code  int    `json:"code" form:"code"`   //
+	Isadd int    `json:"isadd" form:"isadd"` // 失败原因
+	Token string `json:"token" form:"token"`
 }
 
 type Renwu struct {
@@ -47,7 +49,7 @@ type Renwu struct {
 	Douyinid      string `gorm:"column:douyinID" json:"douyinID" form:"douyinID"`             //主页ID
 	Zbid          int    `gorm:"column:zbid" json:"zbid" form:"zbid"`                         //直播id
 	Shengyusl     int    `gorm:"column:shengyusl" json:"shengyusl" form:"shengyusl"`          //剩余数量
-	Shichang      int    `gorm:"column:shichang" json:"shichang" form:"shichang"`             //时长
+	Shichang      int    `gorm:"column:shichang" json:"shichang" form:"shichang"`             //时长 小时
 	Leixing       int    `gorm:"column:leixing" json:"leixing" form:"leixing"`                //任务类型
 	Zhuanshuuid   int    `gorm:"column:zhuanshuUID" json:"zhuanshuUID" form:"zhuanshuUID"`    //指定用户UID放单-可以去掉
 	Zongshuliang  int    `gorm:"column:zongshuliang" json:"zongshuliang" form:"zongshuliang"` //总数量

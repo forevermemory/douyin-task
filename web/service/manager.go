@@ -29,6 +29,12 @@ func RunRedisSyncToMysqlManager() {
 	manager.Run()
 }
 
+func (m *RedisSyncToMysqlManager) addUpdate(v interface{}) {
+	m.update <- v
+}
+func (m *RedisSyncToMysqlManager) addCreate(v interface{}) {
+	m.create <- v
+}
 func (m *RedisSyncToMysqlManager) initRenwu() {
 	conn := global.REDIS.Get()
 	defer conn.Close()
@@ -80,6 +86,9 @@ func (m *RedisSyncToMysqlManager) update_method() {
 			} else if u, ok := data.(*db.Yonghu); ok {
 				// 同步数据到用户
 				db.UpdateYonghu(u)
+			} else if u, ok := data.(*db.Rwlogs); ok {
+				// 同步数据到任务日志
+				db.UpdateRwlogs(u)
 			}
 
 		default:
