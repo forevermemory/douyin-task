@@ -22,6 +22,7 @@ type YonghuRequest struct {
 
 type YonghuResponse struct {
 	Msg           int    `json:"msg"`
+	Code          int    `json:"code"`
 	Guishu        string `json:"guishu"`
 	Money         int    `json:"money"`
 	LastLoginTime string `json:"LastLoginTime"`
@@ -96,9 +97,9 @@ func CheckDouyinIDRepeat(dyid string) ([]map[string]interface{}, error) {
 
 	return data, nil
 }
-func LoginUser(id int, user, password string) (*Yonghu, error) {
+func LoginUser(user, password string) (*Yonghu, error) {
 	o := &Yonghu{}
-	err := global.MYSQL.Table("yonghu").Where("UID = ? and Account = ? and Password = ? ", id, user, password).First(o).Error
+	err := global.MYSQL.Table("yonghu").Where("Account = ? and Password = ? ", user, password).First(o).Error
 	if err != nil {
 		return nil, err
 	}

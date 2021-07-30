@@ -44,25 +44,6 @@ func TokenLogin(c *gin.Context) interface{} {
 	return res
 }
 
-// Login Login
-func Login(c *gin.Context) interface{} {
-	var req = db.YonghuRequest{}
-	err := c.ShouldBind(&req)
-	if err != nil {
-		return Response{Msg: -1}
-	}
-
-	// 获取ip
-	req.Registerip = c.Request.Host
-
-	user, err := service.LoginUser(&req)
-	if err != nil {
-		return Response{Msg: -1}
-	}
-	//
-	return user
-}
-
 // AddYonghu 注册
 func AddYonghu(c *gin.Context) interface{} {
 	var req = db.YonghuRequest{}

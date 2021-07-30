@@ -48,13 +48,16 @@ type RenwuRequest struct {
 
 	Money int `json:"money" form:"money"` //
 
-	///////////// 更新账户信息
-	Bddyyz int ` json:"bddyyz" form:"bddyyz"` //抖音验证状态0-1
-	Bdksyz int ` json:"bdksyz" form:"bdksyz"` //可去掉
+	Bddyyz      int    ` json:"bddyyz" form:"bddyyz"` //抖音验证状态0-1
+	Bdksyz      int    ` json:"bdksyz" form:"bdksyz"` //可去掉
+	Bdzhqz      int    ` json:"bdzhqz" form:"bdzhqz"` //对应任务sfgj
+	Dysign      string ` json:"dysign" form:"dysign"`
+	UserNameAdd int    ` json:"user_name_add" form:"user_name_add"`
 
 	Bbh   int `json:"bbh" form:"bbh"`     //任务限制-软件版本号
 	Xtbbh int `json:"xtbbh" form:"xtbbh"` //任务限制-系统版本号
 	Cfdj  int ` json:"cfdj" form:"cfdj"`  // 抖音等级
+	Pb80  int ` json:"pb80" form:"pb80"`
 
 	Isadd int `json:"isadd" form:"isadd"` // 失败原因
 }
