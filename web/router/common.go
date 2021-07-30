@@ -1,7 +1,6 @@
 package router
 
 import (
-	"douyin/web/db"
 	"fmt"
 	"net/http"
 	"strings"
@@ -56,67 +55,5 @@ func Cors() gin.HandlerFunc {
 		}
 
 		c.Next() //  处理请求
-	}
-}
-
-// JWTAuth 中间件，检查token
-func JWTAuth() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var param struct {
-			Token string `header:"token"`
-		}
-		if err := c.ShouldBindHeader(&param); err != nil {
-			c.Abort()
-			return
-		}
-
-		token := param.Token
-		// 1. 是否携带token
-		if token == "" {
-			c.JSON(http.StatusForbidden, gin.H{
-				"code": -1,
-				"msg":  -1,
-			})
-			c.Abort()
-			return
-		}
-
-		j := db.NewJWT()
-		// parseToken 解析token包含的信息
-		// 2.解析token失败
-		claims, err := j.ParseToken(token)
-		if claims == nil {
-			if err != nil {
-				c.JSON(http.StatusForbidden, gin.H{
-					"code": -1,
-					"msg":  -1,
-				})
-				c.Abort()
-				return
-			}
-
-			c.JSON(http.StatusForbidden, gin.H{
-				"code": -1,
-				"msg":  -1,
-			})
-			c.Abort()
-			return
-		}
-		// 3.token 是否有效 是否过期 TODO
-		// if ok, err := isTokenExist(token, claims.UserID); err != nil || !ok {
-		// 	c.JSON(http.StatusForbidden, gin.H{
-		// 		"code": -1,
-		// 		"msg":  "token已过期，请重新登录",
-		// 	})
-		// 	c.Abort()
-		// 	return
-		// }
-		//
-		// 继续交由下一个路由处理,并将解析出的信息传递下去
-
-		c.Set("token", claims.Token)
-		// c.Set("username", claims.Username)
-		// c.Set("is_vip", claims.IsVip)
-
 	}
 }

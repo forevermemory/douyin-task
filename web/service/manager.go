@@ -78,7 +78,6 @@ func (m *RedisSyncToMysqlManager) update_method() {
 
 			// 获取cpu负载情况  负载高sleep久一点
 			// 不会并发对mysql进行写入
-			time.Sleep(time.Millisecond * 100)
 
 			if r, ok := data.(*db.Renwu); ok {
 				// 同步任务
@@ -120,10 +119,9 @@ func (m *RedisSyncToMysqlManager) create_method() {
 	}
 }
 func (m *RedisSyncToMysqlManager) Run() {
-
+	fmt.Println("加载任务到redis start...")
 	m.initRenwu()
-
-	// 怕挂掉丢数据 可以先存到redis 在慢慢从redis取出来
+	fmt.Println("加载任务到redis end...")
 
 	go m.create_method()
 	go m.update_method()
