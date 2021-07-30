@@ -90,11 +90,11 @@ func GetYonghuByID(c *gin.Context) interface{} {
 	if err != nil {
 		return Response{Code: -1}
 	}
-	_, err = service.GetYonghuByID(id)
+	data, err := service.GetYonghuByID(id)
 	if err != nil {
 		return Response{Code: -1}
 	}
-	return Response{Code: 0}
+	return Response{Code: 0, Data: data}
 }
 
 // ListYonghu // list by page condition
@@ -109,4 +109,19 @@ func ListYonghu(c *gin.Context) interface{} {
 		return Response{Code: -1}
 	}
 	return Response{Code: 0}
+}
+
+// UpdatYonghu 注册
+func UpdatYonghu(c *gin.Context) interface{} {
+	var req = db.Yonghu{}
+	err := c.ShouldBind(&req)
+	if err != nil {
+		return Response{Msg: -1}
+	}
+
+	_, err = service.UpdateYonghu(&req)
+	if err != nil {
+		return Response{Msg: -1}
+	}
+	return Response{Msg: 1}
 }

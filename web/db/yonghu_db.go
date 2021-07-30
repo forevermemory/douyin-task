@@ -63,6 +63,8 @@ type Yonghu struct {
 	Xtbbh            int       `gorm:"column:xtbbh" json:"xtbbh" form:"xtbbh"`       //系统版本号
 	Rjbbh            int       `gorm:"column:rjbbh" json:"rjbbh" form:"rjbbh"`       //软件版本号
 
+	Cfdj int `gorm:"column:cfdj" json:"cfdj" form:"cfdj"` // 抖音等级
+
 	Page
 }
 
@@ -119,7 +121,11 @@ func UpdateYonghu(o *Yonghu, tx ...*gorm.DB) (*Yonghu, error) {
 	if len(tx) > 0 {
 		db = tx[0]
 	}
+
 	err := db.Table("yonghu").Where("UID=?", o.Uid).Update(o).Error
+	if err != nil {
+		return nil, err
+	}
 	return o, err
 }
 

@@ -109,11 +109,10 @@ func (m *RedisSyncToMysqlManager) create_method() {
 			if r, ok := data.(*db.Rwlogs); ok {
 				// 新增任务日志
 				db.AddRwlogs(r)
+			} else if u, ok := data.(*db.Renwu); ok {
+				// 新增用户
+				db.AddRenwu(u)
 			}
-			// else if u, ok := data.(*db.Yonghu); ok {
-			// 	// 同步数据到用户
-			// 	db.UpdateYonghu(u)
-			// }
 
 		default:
 			time.Sleep(time.Millisecond * 10)

@@ -14,6 +14,7 @@ import (
 )
 
 // YonghuGetRenwu 获取任务
+// 如果任务库里面有任务，则通过提取用户提交的信息，看看哪个任务满足条件，返回给用户，任务数量-1，这里需要考虑高并发问题，防止任务数量放出去的大于任务总数量。
 func YonghuGetRenwu(req *db.RenwuRequest) (interface{}, error) {
 	conn := global.REDIS.Get()
 	defer conn.Close()
@@ -29,12 +30,14 @@ func YonghuGetRenwu(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	///////////////////////////
 	res := db.RenwuResponse{}
 
 	// get renwu <= 无任务
 	if user.Rid <= 0 {
 		res.Code = -101
+		res.Money = user.Money
+		res.On = 1
 		return res, nil
 	}
 
@@ -83,6 +86,53 @@ func YonghuGetRenwu(req *db.RenwuRequest) (interface{}, error) {
 	res.Gsfsp = renwu.Gsfsp
 
 	return res, nil
+
+}
+
+// YonghuAddRenwuZhen 添加任务
+func YonghuAddRenwuZhen(req *db.AddRenwuRequest) (interface{}, error) {
+	conn := global.REDIS.Get()
+	defer conn.Close()
+
+	var err error
+
+	//////////////
+	renwu := &db.Renwu{
+		Leixing:      req.Lx,
+		Shengyusl:    req.Lx,
+		Zongshuliang: req.Lx,
+		Shichang:     req.Sj,
+		Url:          req.Url,
+		In:           req.In,
+		Name:         req.Name,
+		Gsfsp:        req.Gsfsp,
+		Dzcs:         req.Dzcs,
+		Biaoshi:      req.Ddh,
+		Rwmoney:      req.Money,
+		Sfsl:         req.Sfsl,
+		Sfgj:         req.Sfgj,
+		Rjbbh:        req.Rjbbh,
+		Xtbbh:        req.Xtbbh,
+		Zbid:         req.Zbid,
+		Douyinid:     req.Userid,
+	}
+
+	renwu, err = db.AddRenwu(renwu)
+	if err != nil {
+		return nil, err
+	}
+	////////////
+	// update
+	rb, err := json.Marshal(renwu)
+	if err != nil {
+		return nil, err
+	}
+	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, renwu.Rid), string(rb))
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 
 }
 

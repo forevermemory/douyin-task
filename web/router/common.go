@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func route(f func(ctx *gin.Context) interface{}) gin.HandlerFunc {
+func wrap(f func(ctx *gin.Context) interface{}) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		context.JSON(200, f(context))
 	}

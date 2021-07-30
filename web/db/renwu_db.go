@@ -25,22 +25,59 @@ type RenwuResponse struct {
 	Rwjd  int    `json:"rwjd"`
 	Gsfsp int    `json:"gsfsp"`
 }
+
 type RenwuRequest struct {
-	ID int `json:"ID" form:"ID"`
+	ID    int    `json:"ID" form:"ID"`
+	Code  int    `json:"code" form:"code"` //
+	Token string `json:"token" form:"token"`
 
 	Dzcs int `gorm:"column:dzcs" json:"dzcs" form:"dzcs"` //点赞次数
 
 	Rwmoney int `json:"rwmoney" form:"rwmoney"` //任务单价
 	Sfsl    int `json:"sfsl" form:"sfsl"`       //任务权重 1=送礼物的任务 0=不送礼物的任务
 	Sfgj    int `json:"sfgj" form:"sfgj"`       //0=不挂机任务 1=挂机任务
-	Rjbbh   int `json:"rjbbh" form:"rjbbh"`     //任务限制-软件版本号
-	Xtbbh   int `json:"xtbbh" form:"xtbbh"`     //任务限制-系统版本号
-	Zbid    int `json:"zbid" form:"zbid"`       //直播id
-	Userid  int `json:"userid" form:"userid"`   //直播id
 
-	Code  int    `json:"code" form:"code"`   //
-	Isadd int    `json:"isadd" form:"isadd"` // 失败原因
-	Token string `json:"token" form:"token"`
+	Zbid   int `json:"zbid" form:"zbid"`     //直播id
+	Userid int `json:"userid" form:"userid"` //直播id
+
+	Dyid  string ` json:"dyid" form:"dyid"`  //抖音id
+	Dbye  int    ` json:"dbye" form:"dbye"`  //抖币余额
+	Dyyz  int    ` json:"dyyz" form:"dyyz"`  //抖音验证状态0-1
+	Ksyz  int    ` json:"ksyz" form:"ksyz"`  //可去掉
+	Rjbbh int    `json:"rjbbh" form:"rjbbh"` //任务限制-软件版本号
+
+	Money int `json:"money" form:"money"` //
+
+	///////////// 更新账户信息
+	Bddyyz int ` json:"bddyyz" form:"bddyyz"` //抖音验证状态0-1
+	Bdksyz int ` json:"bdksyz" form:"bdksyz"` //可去掉
+
+	Bbh   int `json:"bbh" form:"bbh"`     //任务限制-软件版本号
+	Xtbbh int `json:"xtbbh" form:"xtbbh"` //任务限制-系统版本号
+	Cfdj  int ` json:"cfdj" form:"cfdj"`  // 抖音等级
+
+	Isadd int `json:"isadd" form:"isadd"` // 失败原因
+}
+
+type AddRenwuRequest struct {
+	ID     int    `json:"ID" form:"ID"`
+	Lx     int    `json:"lx" form:"lx"`
+	Sl     int    `json:"sl" form:"sl"`
+	Sj     int    `json:"sj" form:"sj"`
+	Url    string `json:"url" form:"url"`
+	In     int    `json:"in" form:"in"`
+	Name   string `json:"name" form:"name"`
+	Gsfsp  int    `json:"gsfsp" form:"gsfsp"`   //光送粉丝牌-任务条件
+	Dzcs   int    `json:"dzcs" form:"dzcs"`     //点赞次数
+	Ddh    string ` json:"ddh" form:"ddh"`      //订单号
+	Money  int    ` json:"money" form:"money"`  //订单号
+	Sfsl   int    `json:"sfsl" form:"sfsl"`     //任务权重 1=送礼物的任务 0=不送礼物的任务
+	Sfgj   int    `gjson:"sfgj" form:"sfgj"`    //0=不挂机任务 1=挂机任务
+	Rjbbh  int    `json:"rjbbh" form:"rjbbh"`   //任务限制-软件版本号
+	Xtbbh  int    ` json:"xtbbh" form:"xtbbh"`  //任务限制-系统版本号
+	Zbid   int    `json:"zbid" form:"zbid"`     //直播id
+	Userid string `json:"userid" form:"userid"` //直播id
+
 }
 
 type Renwu struct {

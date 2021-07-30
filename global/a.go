@@ -26,7 +26,7 @@ func initMysql() {
 	if MYSQL == nil {
 		var err error
 		count := 1
-		sql_str := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8&parseTime=true&loc=Local", config.CONFIG.MysqlConfig.User, config.CONFIG.MysqlConfig.Password, config.CONFIG.MysqlConfig.IP, config.CONFIG.MysqlConfig.Port, config.CONFIG.MysqlConfig.Database)
+		sql_str := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8&loc=Local", config.CONFIG.MysqlConfig.User, config.CONFIG.MysqlConfig.Password, config.CONFIG.MysqlConfig.IP, config.CONFIG.MysqlConfig.Port, config.CONFIG.MysqlConfig.Database)
 		for {
 			MYSQL, err = gorm.Open("mysql", sql_str)
 			if err != nil {
