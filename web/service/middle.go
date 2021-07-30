@@ -279,11 +279,15 @@ func Middle1(req *db.RenwuRequest) (interface{}, error) {
 
 	/////////////////////////////
 	// 看看sfsl 是否送礼 是不是=1如果是1就设置 用户 rwjd=2 否则设置rwjd=3
+	// 设备获取到任务后设置用户信息rid rwjd=1 rwkstime=任务领取时间
+
 	if renwu.Sfsl == 0 {
 		user.Rwjd = 3
 	} else if renwu.Sfsl == 1 {
 		user.Rwjd = 2
 	}
+	// user.Rwjd = 1
+	// user.Rwkstime = int(time.Now().Unix())
 	user.Rwkstime = int(time.Now().Unix())
 	/////////////////////////////
 	// update

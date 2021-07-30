@@ -100,11 +100,11 @@ func Top101(c *gin.Context) interface{} {
 		return Response{Code: -101}
 	}
 
-	_, err = service.Top101(&req)
+	res, err := service.Top101(&req)
 	if err != nil {
 		return Response{Code: -101}
 	}
-	return Response{Msg: 1}
+	return Response{Msg: 1, Code: 1, Data: res}
 }
 
 // Top1001_110  获取任务
@@ -118,19 +118,5 @@ func Top1001_110(c *gin.Context) interface{} {
 	if err != nil {
 		return Response{Code: -101}
 	}
-	return res
-}
-
-// Top1001_111  TODO
-func Top1001_111(c *gin.Context) interface{} {
-	req := db.RenwuRequest{}
-	err := c.ShouldBind(&req)
-	if err != nil {
-		return Response{Code: -101}
-	}
-	res, err := service.Top1001_111(&req)
-	if err != nil {
-		return Response{Code: -101}
-	}
-	return res
+	return Response{Msg: 1, Code: 1, Data: res}
 }

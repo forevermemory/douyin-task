@@ -105,7 +105,7 @@ type Renwu struct {
 	Biaoshi       string `gorm:"column:biaoshi" json:"biaoshi" form:"biaoshi"`                   //订单号
 	Gsfsp         int    `gorm:"column:gsfsp" json:"gsfsp" form:"gsfsp"`                         //光送粉丝牌-任务条件
 	Dzcs          int    `gorm:"column:dzcs" json:"dzcs" form:"dzcs"`                            //点赞次数
-	Sfsl          int    `gorm:"column:sfsl" json:"sfsl" form:"sfsl"`                            //任务权重 1=送礼物的任务 0=不送礼物的任务
+	Sfsl          int    `gorm:"column:sfsl" json:"sfsl" form:"sfsl"`                            //任务权重 2就是送礼物任务 1就是不送礼物任务
 	Sfgj          int    `gorm:"column:sfgj" json:"sfgj" form:"sfgj"`                            //0=不挂机任务 1=挂机任务
 	Ksqz          int    `gorm:"column:ksqz" json:"ksqz" form:"ksqz"`                            //快手权重-可去掉
 	Rwmoney       int    `gorm:"column:rwmoney" json:"rwmoney" form:"rwmoney"`                   //任务单价
