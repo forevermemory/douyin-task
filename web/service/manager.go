@@ -9,9 +9,10 @@ import (
 )
 
 var manager = &RedisSyncToMysqlManager{
-	update:   make(chan interface{}, 1024),
-	create:   make(chan interface{}, 1024),
-	renwuSet: map[int]int{},
+	update:    make(chan interface{}, 1024),
+	create:    make(chan interface{}, 1024),
+	renwuSet:  map[int]int{},
+	yonghuSet: map[int]int{},
 }
 
 type RedisSyncToMysqlManager struct {
@@ -23,9 +24,19 @@ type RedisSyncToMysqlManager struct {
 
 	// 任务编号是否被锁
 	renwuSet map[int]int
+	//
+	yonghuSet map[int]int
 }
 
 func RunRedisSyncToMysqlManager() {
+
+	fmt.Println("加载任务到redis start...")
+	manager.initRenwu()
+	fmt.Println("加载任务到redis end...")
+	fmt.Println("加载用户到redis start...")
+	manager.initYonghu()
+	fmt.Println("加载用户到redis end...")
+
 	manager.Run()
 }
 
@@ -34,6 +45,26 @@ func (m *RedisSyncToMysqlManager) addUpdate(v interface{}) {
 }
 func (m *RedisSyncToMysqlManager) addCreate(v interface{}) {
 	m.create <- v
+}
+
+func (m *RedisSyncToMysqlManager) initYonghu() {
+
+	// get all
+	qu := &db.Yonghu{
+		Page: db.Page{
+			PageSize: 99999999,
+		},
+	}
+	users, err := db.ListYonghu(qu)
+	if err != nil {
+
+		return
+	}
+
+	for _, u := range users {
+		m.yonghuSet[u.Uid] = 1
+	}
+
 }
 func (m *RedisSyncToMysqlManager) initRenwu() {
 	conn := global.REDIS.Get()
@@ -119,9 +150,6 @@ func (m *RedisSyncToMysqlManager) create_method() {
 	}
 }
 func (m *RedisSyncToMysqlManager) Run() {
-	fmt.Println("加载任务到redis start...")
-	m.initRenwu()
-	fmt.Println("加载任务到redis end...")
 
 	go m.create_method()
 	go m.update_method()

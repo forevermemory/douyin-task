@@ -8,5 +8,6 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gomodule/redigo v1.8.5
 	github.com/jinzhu/gorm v1.9.16
+	github.com/robfig/cron v1.2.0
 	gopkg.in/yaml.v2 v2.4.0
 )

@@ -21,6 +21,7 @@ func main() {
 
 	//
 	go service.RunRedisSyncToMysqlManager()
+	go service.RunCronTasks()
 
 	// router
 	r := router.InitRouter(nil, "")

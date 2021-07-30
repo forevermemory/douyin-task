@@ -267,9 +267,11 @@ func Down1(req *db.RenwuRequest) (interface{}, error) {
 			return nil, err
 		}
 		//////////////////
-		sonMoney += stmp.Money
-		stmp.Money = -1 // qwq TODO
-		tmpSons = append(tmpSons, son)
+		if stmp.Money > 0 {
+			sonMoney += stmp.Money
+			stmp.Money = -1 // qwq
+			tmpSons = append(tmpSons, son)
+		}
 		//////////////////
 
 	}
