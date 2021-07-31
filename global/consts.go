@@ -9,5 +9,5 @@ const (
 	REDIS_PREFIX_RENWU_LOG string = "renwulog_"
 
 	// renwulogip_${ip}_${renwuid}
-	REDIS_PREFIX_RENWU_LOG_IP string = "renwulogip_"
+	REDIS_PREFIX_RENWU_IP string = "renwulogip_"
 )

@@ -67,8 +67,8 @@ func (a *Api) Handle(c *gin.Context) interface{} {
 			return controller.Middle4(c)
 		case 5:
 			return controller.Middle5(c)
-		case 501:
-			return controller.Middle501(c)
+		// case 501:
+		// 	return controller.Middle501(c)
 		// down
 		case 6:
 			return controller.Down1(c)

@@ -125,7 +125,7 @@ func (m *RedisSyncToMysqlManager) initRenwuIPLog() {
 		if err != nil {
 			continue
 		}
-		_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG_IP, rip.IP, rip.Rid), string(rb))
+		_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_IP, rip.IP, rip.Rid), string(rb))
 		if err != nil {
 			continue
 		}

@@ -211,6 +211,11 @@ func Top101(req *db.AddRenwuRequest) (interface{}, error) {
 		Xtbbh:        req.Xtbbh,
 		Zbid:         req.Zbid,
 		Douyinid:     req.Userid,
+
+		// README 这里新增任务也把这几个条件带上
+		IsOnlyOneTime: req.IsOnlyOneTime,
+		Lqzbyc:        req.Lqzbyc,
+		Ipsync:        req.Ipsync,
 	}
 
 	renwu, err = db.AddRenwu(renwu)
@@ -308,7 +313,7 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 		}
 	*/
 
-	// 遍历redis的所有任务
+	// 遍历redis的所有任务 这里对cpu性能要求很高
 	okRenwus := make([]*db.Renwu, 8)
 	for renwuid := range manager.renwuSet {
 		wg.Add(1)
@@ -348,7 +353,7 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	//
 	// 判断任务是否满足
 	//
-	// 1.
+	// 1. 存在任务领取日志
 	renwulogStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, user.Uid, toGetRenwu.Rid)))
 	if err != nil {
 		return nil, err
@@ -379,7 +384,7 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	}
 
 	// 4. // 4. 还有个条件是限制一个任务  同ip只能进多少台
-	_key := fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG_IP, req.Ipaddr, toGetRenwu.Rid)
+	_key := fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_IP, req.Ipaddr, toGetRenwu.Rid)
 	renwuiplogStr, err := redis.String(conn.Do("get", _key))
 	if err != nil {
 		return nil, err
@@ -406,7 +411,7 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 		}
 	}
 
-	// lock
+	// lock 任务
 	_, ok := manager.renwuSet[toGetRenwu.Rid]
 	if ok {
 		// lock
@@ -423,7 +428,7 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	// num--
 	toGetRenwu.Shengyusl = toGetRenwu.Shengyusl - 1
 	// 记录任务添加历史记录
-	txlog := db.Rwlogs{
+	rwlog := db.Rwlogs{
 		Uid:    user.Uid,
 		Rid:    toGetRenwu.Rid,
 		Userid: user.Uid,
@@ -435,11 +440,11 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	/////////////////////////////
 	// update
 	// renwulog
-	renwlogb, err := json.Marshal(&txlog)
+	renwlogb, err := json.Marshal(&rwlog)
 	if err != nil {
 		return nil, err
 	}
-	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, txlog.Userid, txlog.Rid), string(renwlogb))
+	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, rwlog.Userid, rwlog.Rid), string(renwlogb))
 	if err != nil {
 		return nil, err
 	}
@@ -471,7 +476,7 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG_IP, req.Ipaddr, toGetRenwu.Rid), rls)
+	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_IP, req.Ipaddr, toGetRenwu.Rid), rls)
 	if err != nil {
 		return nil, err
 	}
@@ -479,8 +484,7 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	manager.addUpdate(&user)
 	manager.addUpdate(&toGetRenwu)
 	manager.addUpdate(&renwuiplog)
-
-	manager.addCreate(&txlog)
+	manager.addCreate(&rwlog)
 
 	// //// response
 	// res.Code = 1
