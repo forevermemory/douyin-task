@@ -114,6 +114,9 @@ func Top1001_110(c *gin.Context) interface{} {
 	if err != nil {
 		return Response{Code: -101}
 	}
+
+	req.Ipaddr = c.Request.Host
+
 	res, err := service.Top1001_110(&req)
 	if err != nil {
 		return Response{Code: -101}

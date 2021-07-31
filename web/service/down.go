@@ -43,7 +43,7 @@ func Down6(req *db.RenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 
-	manager.addUpdate(user)
+	manager.addUpdate(&user)
 
 	return nil, nil
 }
@@ -122,7 +122,7 @@ func Down4(req *db.RenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 
-	manager.addUpdate(user)
+	manager.addUpdate(&user)
 
 	return nil, nil
 }
@@ -224,7 +224,7 @@ func Down2(req *db.RenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 
-	manager.addUpdate(user)
+	manager.addUpdate(&user)
 
 	return nil, nil
 }
@@ -307,7 +307,7 @@ func Down1(req *db.RenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 
-	manager.addUpdate(user)
+	manager.addUpdate(&user)
 	for _, son := range sons {
 		manager.addUpdate(son)
 	}

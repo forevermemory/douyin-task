@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -34,6 +35,8 @@ func Top1(req *db.YonghuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	// add yonghu set
+	manager.yonghuSet[user.Uid] = 1
 	return u, nil
 }
 
@@ -155,7 +158,7 @@ func Top5(req *db.YonghuRequest) (interface{}, error) {
 	user.Lastlogintime = time.Now()
 	///////////////////////////
 
-	manager.addUpdate(user)
+	manager.addUpdate(&user)
 
 	// response
 	res := db.YonghuResponse{
@@ -235,8 +238,12 @@ func Top101(req *db.AddRenwuRequest) (interface{}, error) {
 
 // 设备访问服务器获取任务 先查询该设备有没有历史任务未完成 如果有就返回历史任务
 func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
+
 	conn := global.REDIS.Get()
 	defer conn.Close()
+
+	tlock := &sync.Mutex{}
+	wg := sync.WaitGroup{}
 
 	// user
 	userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token)))
@@ -268,23 +275,135 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	/*
 		bdzhqz 任务表的是否送礼 sfsl 2就是送礼物任务 1就是不送礼物任务
 	*/
-	QU := &db.Renwu{
-		Sfsl: req.Bdzhqz,
-		Page: db.Page{
-			PageSize: 99999999,
-		},
+	/*
+		QU := &db.Renwu{
+			Sfsl: req.Bdzhqz,
+			Page: db.Page{
+				PageSize: 99999999,
+			},
+		}
+		// TODO
+		okrenwus, err := db.ListRenwu(QU)
+		if err != nil {
+			return nil, err
+		}
+		if len(okrenwus) == 0 {
+			return nil, errors.New("无满足的任务")
+		}
+
+		tmp := okrenwus[0]
+		if tmp.Shengyusl == 0 {
+			return nil, errors.New("任务数量为0")
+		}
+		// mysql maybe not new
+		// renwu
+		renwuStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, user.Rid)))
+		if err != nil {
+			return nil, err
+		}
+		toGetRenwu := db.Renwu{}
+		err = json.Unmarshal([]byte(renwuStr), &toGetRenwu)
+		if err != nil {
+			return nil, err
+		}
+	*/
+
+	// 遍历redis的所有任务
+	okRenwus := make([]*db.Renwu, 8)
+	for renwuid := range manager.renwuSet {
+		wg.Add(1)
+
+		go func(rid int) {
+			defer wg.Done()
+			// renwu
+			renwuStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, rid)))
+			if err != nil {
+				return
+			}
+			tmp := db.Renwu{}
+			err = json.Unmarshal([]byte(renwuStr), &tmp)
+			if err != nil {
+				return
+			}
+			// 条件判断是否满足
+			if tmp.Sfsl == req.Bdzhqz {
+				tlock.Lock()
+				defer tlock.Unlock()
+				okRenwus = append(okRenwus, &tmp)
+			}
+
+		}(renwuid)
 	}
-	okrenwus, err := db.ListRenwu(QU)
+	fmt.Println("wait...", user.Uid)
+	wg.Wait()
+	fmt.Println("done...", user.Uid)
+
+	if len(okRenwus) == 0 {
+		return nil, errors.New("无满足的任务")
+	}
+	toGetRenwu := okRenwus[0]
+	if toGetRenwu.Shengyusl == 0 {
+		return nil, errors.New("任务数量为0")
+	}
+	//
+	// 判断任务是否满足
+	//
+	// 1.
+	renwulogStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, user.Uid, toGetRenwu.Rid)))
 	if err != nil {
 		return nil, err
 	}
-	if len(okrenwus) == 0 {
-		return nil, errors.New("无满足的任务")
+	if len(renwulogStr) > 0 {
+		// 存在任务日志
+		renwulog := db.Rwlogs{}
+		err = json.Unmarshal([]byte(renwulogStr), &renwulog)
+		if err != nil {
+			return nil, err
+		}
+		// 1. 部分任务一个用户只能领取一次
+		if toGetRenwu.IsOnlyOneTime == 1 {
+			return nil, errors.New("任务一个用户只能领取一次")
+		}
+		// 2. 一天只能领取那个主播任务一次
+		if toGetRenwu.Lqzbyc == 1 {
+			if renwulog.Day.Day() == time.Now().Day() {
+				// 说明是当天领的任务
+				return nil, errors.New("一天只能领取那个主播任务一次")
+			}
+		}
+		// 3. 用户5分钟内做这个任务失败了 下次就不让他领取这个任务
+		if renwulog.Isadd == db.Rwlogs_isadd_ABADON_TASK_EXCEPT_FIVE_MIN {
+			return nil, errors.New("用户5分钟内做这个任务失败")
+		}
+
 	}
 
-	toGetRenwu := okrenwus[0]
-	if toGetRenwu.Shengyusl == 0 {
-		return nil, errors.New("任务数量为0")
+	// 4. // 4. 还有个条件是限制一个任务  同ip只能进多少台
+	_key := fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG_IP, req.Ipaddr, toGetRenwu.Rid)
+	renwuiplogStr, err := redis.String(conn.Do("get", _key))
+	if err != nil {
+		return nil, err
+	}
+	renwuiplog := db.Iplogs{}
+	if len(renwuiplogStr) > 0 {
+		err = json.Unmarshal([]byte(renwuiplogStr), &renwuiplog)
+		if err != nil {
+			return nil, err
+		}
+		if renwuiplog.Times >= toGetRenwu.Ipsync {
+			return nil, errors.New("任务限制同ip只能进多少台")
+		}
+	} else {
+		// 该ip第一次使用
+		renwuiplog.IP = req.Ipaddr
+		renwuiplog.Rid = toGetRenwu.Rid
+		renwuiplog.Day = time.Now()
+		renwuiplog.Times = 0
+		// 需要先创建
+		_, err = db.AddIplogs(&renwuiplog)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// lock
@@ -312,9 +431,19 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 		Isadd:  db.Rwlogs_isadd_GET_TASK,
 		Day:    time.Now(),
 	}
-	manager.addCreate(&txlog)
+
 	/////////////////////////////
 	// update
+	// renwulog
+	renwlogb, err := json.Marshal(&txlog)
+	if err != nil {
+		return nil, err
+	}
+	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, txlog.Userid, txlog.Rid), string(renwlogb))
+	if err != nil {
+		return nil, err
+	}
+	//renwu
 	rb, err := json.Marshal(toGetRenwu)
 	if err != nil {
 		return nil, err
@@ -323,7 +452,7 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	// user
 	uy, err := json.Marshal(user)
 	if err != nil {
 		return nil, err
@@ -336,9 +465,22 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	// iplog
+	renwuiplog.Times += 1
+	rls, err := json.Marshal(renwuiplog)
+	if err != nil {
+		return nil, err
+	}
+	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG_IP, req.Ipaddr, toGetRenwu.Rid), rls)
+	if err != nil {
+		return nil, err
+	}
 
-	manager.addUpdate(user)
-	manager.addUpdate(toGetRenwu)
+	manager.addUpdate(&user)
+	manager.addUpdate(&toGetRenwu)
+	manager.addUpdate(&renwuiplog)
+
+	manager.addCreate(&txlog)
 
 	// //// response
 	// res.Code = 1

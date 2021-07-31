@@ -17,6 +17,8 @@ const (
 	Rwlogs_isadd_ABADON_TASK_OFF_LINE          int = 7
 	Rwlogs_isadd_ABADON_TASK_LEAVE             int = 8
 	Rwlogs_isadd_ALLREADY_DONE                 int = 9
+	Rwlogs_isadd_ABADON_TASK_EXCEPT_FIVE_MIN   int = 10
+	Rwlogs_isadd_ABADON_TASK_EXCEPT_EIGHT_MIN  int = 11
 )
 
 type Rwlogs struct {
@@ -35,6 +37,8 @@ type Rwlogs struct {
 	// 7: 放弃任务，不在线
 	// 8: 放弃任务，中途离开直播间
 	// 9: 已经做过
+	// 10: 任务失败 用户5分钟内做这个任务失败
+	// 11 任务失败 用户8分钟内做这个任务失败
 	Isadd int `gorm:"column:isadd" json:"isadd" form:"isadd"`
 
 	Day time.Time `gorm:"column:day" json:"day" form:"day"`

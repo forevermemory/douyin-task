@@ -11,6 +11,11 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
+// Middle501 任务暂停 暂停任务，即使有剩余数量设备也不能获取该任务。
+func Middle501(req *db.RenwuRequest) (interface{}, error) {
+	return nil, nil
+}
+
 // Middle5 任务操作：5 主播提前下播
 // 任务 tqjs+1 到达一定数量检测 并且暂停任务stop=1
 func Middle5(req *db.RenwuRequest) (interface{}, error) {
@@ -53,7 +58,7 @@ func Middle5(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	manager.addUpdate(renwu)
+	manager.addUpdate(&renwu)
 
 	return nil, nil
 }
@@ -87,7 +92,12 @@ func Middle4(req *db.RenwuRequest) (interface{}, error) {
 	}
 
 	/////////////////////////////
-	rwlog, err := db.GetRwlogsByruandyonghuid(user.Uid, user.Rid)
+	renwulogStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, user.Uid, user.Rid)))
+	if err != nil {
+		return nil, err
+	}
+	rwlog := db.Rwlogs{}
+	err = json.Unmarshal([]byte(renwulogStr), &rwlog)
 	if err != nil {
 		return nil, err
 	}
@@ -120,9 +130,9 @@ func Middle4(req *db.RenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 
-	manager.addUpdate(renwu)
-	manager.addUpdate(user)
-	manager.addUpdate(rwlog)
+	manager.addUpdate(&renwu)
+	manager.addUpdate(&user)
+	manager.addUpdate(&rwlog)
 
 	return nil, nil
 }
@@ -181,7 +191,7 @@ func Middle3(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	manager.addUpdate(user)
+	manager.addUpdate(&user)
 
 	////// response
 
@@ -238,7 +248,7 @@ func Middle2(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	manager.addUpdate(user)
+	manager.addUpdate(&user)
 
 	return nil, nil
 }
@@ -304,7 +314,7 @@ func Middle1(req *db.RenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 
-	manager.addUpdate(user)
+	manager.addUpdate(&user)
 
 	/////
 

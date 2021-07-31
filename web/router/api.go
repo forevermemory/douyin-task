@@ -57,7 +57,6 @@ func (a *Api) Handle(c *gin.Context) interface{} {
 
 		case 110:
 			return controller.Top1001_110(c) // 获取任务
-
 		case 1:
 			return controller.Middle1(c)
 		case 2:
@@ -68,6 +67,8 @@ func (a *Api) Handle(c *gin.Context) interface{} {
 			return controller.Middle4(c)
 		case 5:
 			return controller.Middle5(c)
+		case 501:
+			return controller.Middle501(c)
 		// down
 		case 6:
 			return controller.Down1(c)

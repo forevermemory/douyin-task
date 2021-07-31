@@ -53,11 +53,36 @@ func (t *Task) Run() (interface{}, error) {
 		}
 
 		// 领了任务超过5分钟的
+		// 还有就是用户5分钟内做这个任务失败了 下次就不让他领取这个任务
 		if user.Rwjd == 2 {
 			if int(time.Now().Unix())-user.Rwkstime > 60*5 {
 				////////////////////
 				user.Rwjd = -1
 				user.Rid = -1
+				// 更新到任务log
+
+				// renwulog
+				renwulogStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, user.Uid, user.Rid)))
+				if err != nil {
+					return nil, err
+				}
+				rwlog := db.Rwlogs{}
+				err = json.Unmarshal([]byte(renwulogStr), &rwlog)
+				if err != nil {
+					return nil, err
+				}
+				/////////////
+				rwlog.Isadd = db.Rwlogs_isadd_ABADON_TASK_EXCEPT_FIVE_MIN
+				/////////////
+
+				rb, err := json.Marshal(rwlog)
+				if err != nil {
+					return nil, err
+				}
+				_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, rwlog.Userid, rwlog.Rid), string(rb))
+				if err != nil {
+					return nil, err
+				}
 				///////////////////
 				// update
 				uy, err := json.Marshal(user)
@@ -73,7 +98,8 @@ func (t *Task) Run() (interface{}, error) {
 					return nil, err
 				}
 
-				manager.addUpdate(user)
+				manager.addUpdate(&user)
+				manager.addUpdate(&rwlog)
 			}
 
 			continue
@@ -86,6 +112,31 @@ func (t *Task) Run() (interface{}, error) {
 				user.Rwjd = -1
 				user.Rid = -1
 				///////////////////
+				// renwulog
+				renwulogStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, user.Uid, user.Rid)))
+				if err != nil {
+					return nil, err
+				}
+				rwlog := db.Rwlogs{}
+				err = json.Unmarshal([]byte(renwulogStr), &rwlog)
+				if err != nil {
+					return nil, err
+				}
+				/////////////
+				rwlog.Isadd = db.Rwlogs_isadd_ABADON_TASK_EXCEPT_EIGHT_MIN
+				/////////////
+
+				rb, err := json.Marshal(rwlog)
+				if err != nil {
+					return nil, err
+				}
+				_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, rwlog.Userid, rwlog.Rid), string(rb))
+				if err != nil {
+					return nil, err
+				}
+				///////////////////
+
+				///////////
 				// update
 				uy, err := json.Marshal(user)
 				if err != nil {
@@ -100,7 +151,8 @@ func (t *Task) Run() (interface{}, error) {
 					return nil, err
 				}
 
-				manager.addUpdate(user)
+				manager.addUpdate(&user)
+				manager.addUpdate(&rwlog)
 			}
 
 			continue
