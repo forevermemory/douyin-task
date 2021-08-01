@@ -3,63 +3,29 @@ package service
 import (
 	"douyin/global"
 	"douyin/web/db"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
-
-	"github.com/gomodule/redigo/redis"
 )
 
 // Down6 更新账户抖币余额
 func Down6(req *db.RenwuRequest) (interface{}, error) {
-	conn := global.REDIS.Get()
-	defer conn.Close()
+	user, err := manager.getUserByToken(req.Token)
+	if err != nil {
+		return nil, err
+	}
 
-	// user
-	userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token)))
-	if err != nil {
-		return nil, err
-	}
-	user := db.Yonghu{}
-	err = json.Unmarshal([]byte(userStr), &user)
-	if err != nil {
-		return nil, err
-	}
 	//////////////////////////
 	user.Money += req.Money
 	//////////////////////////
 	// update
-	uy, err := json.Marshal(user)
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, user.Uid), string(uy))
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token), string(uy))
-	if err != nil {
-		return nil, err
-	}
-
-	manager.addUpdate(&user)
+	manager.setUser(user)
 
 	return nil, nil
 }
 
 // Down5 查询提现记录
 func Down5(req *db.RenwuRequest) (interface{}, error) {
-	conn := global.REDIS.Get()
-	defer conn.Close()
-
-	// user
-	userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token)))
-	if err != nil {
-		return nil, err
-	}
-	user := db.Yonghu{}
-	err = json.Unmarshal([]byte(userStr), &user)
+	user, err := manager.getUserByToken(req.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -87,13 +53,7 @@ func Down4(req *db.RenwuRequest) (interface{}, error) {
 	conn := global.REDIS.Get()
 	defer conn.Close()
 
-	// user
-	userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token)))
-	if err != nil {
-		return nil, err
-	}
-	user := db.Yonghu{}
-	err = json.Unmarshal([]byte(userStr), &user)
+	user, err := manager.getUserByToken(req.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -109,36 +69,14 @@ func Down4(req *db.RenwuRequest) (interface{}, error) {
 
 	//////////////////////////
 	// update
-	uy, err := json.Marshal(user)
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, user.Uid), string(uy))
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token), string(uy))
-	if err != nil {
-		return nil, err
-	}
-
-	manager.addUpdate(&user)
+	manager.setUser(user)
 
 	return nil, nil
 }
 
 // Down3 查询用户总余额
 func Down3(req *db.RenwuRequest) (interface{}, error) {
-	conn := global.REDIS.Get()
-	defer conn.Close()
-
-	// user
-	userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token)))
-	if err != nil {
-		return nil, err
-	}
-	user := db.Yonghu{}
-	err = json.Unmarshal([]byte(userStr), &user)
+	user, err := manager.getUserByToken(req.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -151,20 +89,14 @@ func Down3(req *db.RenwuRequest) (interface{}, error) {
 	}
 	for _, son := range sons {
 		// 这里只取son的id 再从redis取
-		stmp := db.Yonghu{}
-
-		userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, son.Uid)))
+		tmps, err := manager.getUser(son.Uid)
 		if err != nil {
 			return nil, err
 		}
-		err = json.Unmarshal([]byte(userStr), &stmp)
-		if err != nil {
-			return nil, err
-		}
-		if son.Money == -1 {
+		if tmps.Money == -1 {
 			continue
 		}
-		user.Money += son.Money
+		user.Money += tmps.Money
 	}
 
 	//////////////////////
@@ -178,16 +110,7 @@ func Down3(req *db.RenwuRequest) (interface{}, error) {
 
 // Down2 提现
 func Down2(req *db.RenwuRequest) (interface{}, error) {
-	conn := global.REDIS.Get()
-	defer conn.Close()
-
-	// user
-	userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token)))
-	if err != nil {
-		return nil, err
-	}
-	user := db.Yonghu{}
-	err = json.Unmarshal([]byte(userStr), &user)
+	user, err := manager.getUserByToken(req.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -211,20 +134,7 @@ func Down2(req *db.RenwuRequest) (interface{}, error) {
 	}
 	//////////////////////////
 	// update
-	uy, err := json.Marshal(user)
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, user.Uid), string(uy))
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token), string(uy))
-	if err != nil {
-		return nil, err
-	}
-
-	manager.addUpdate(&user)
+	manager.setUser(user)
 
 	return nil, nil
 }
@@ -232,16 +142,7 @@ func Down2(req *db.RenwuRequest) (interface{}, error) {
 // Down1
 // 转移所有子账号的余额到主账号上
 func Down1(req *db.RenwuRequest) (interface{}, error) {
-	conn := global.REDIS.Get()
-	defer conn.Close()
-
-	// user
-	userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token)))
-	if err != nil {
-		return nil, err
-	}
-	user := db.Yonghu{}
-	err = json.Unmarshal([]byte(userStr), &user)
+	user, err := manager.getUserByToken(req.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -256,13 +157,8 @@ func Down1(req *db.RenwuRequest) (interface{}, error) {
 	tmpSons := make([]*db.Yonghu, 0)
 	for _, son := range sons {
 		// 这里只取son的id 再从redis取
-		stmp := db.Yonghu{}
 
-		userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, son.Uid)))
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal([]byte(userStr), &stmp)
+		stmp, err := manager.getUser(son.Uid)
 		if err != nil {
 			return nil, err
 		}
@@ -275,42 +171,13 @@ func Down1(req *db.RenwuRequest) (interface{}, error) {
 		//////////////////
 
 	}
-
-	for _, son := range tmpSons {
-		// update
-		uy, err := json.Marshal(son)
-		if err != nil {
-			return nil, err
-		}
-		_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, son.Uid), string(uy))
-		if err != nil {
-			return nil, err
-		}
-		_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, son.Token), string(uy))
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	user.Money += sonMoney
+
+	/////////////////////
 	// update
-	uy, err := json.Marshal(user)
-	if err != nil {
-		return nil, err
+	manager.setUser(user)
+	for _, son := range tmpSons {
+		manager.setUser(son)
 	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, user.Uid), string(uy))
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token), string(uy))
-	if err != nil {
-		return nil, err
-	}
-
-	manager.addUpdate(&user)
-	for _, son := range sons {
-		manager.addUpdate(son)
-	}
-
 	return nil, nil
 }

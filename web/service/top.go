@@ -1,17 +1,15 @@
 package service
 
 import (
-	"douyin/global"
 	"douyin/utils"
 	"douyin/web/db"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"sync"
 	"time"
 
-	"github.com/gomodule/redigo/redis"
+	"github.com/jinzhu/gorm"
 )
 
 // Top1 add
@@ -43,9 +41,6 @@ func Top1(req *db.YonghuRequest) (interface{}, error) {
 // Top2 Top2
 func Top2(req *db.YonghuRequest) (interface{}, error) {
 
-	conn := global.REDIS.Get()
-	defer conn.Close()
-
 	////////////////////////////
 	//  user password
 	user, err := db.LoginUser(req.User, req.Password)
@@ -53,11 +48,8 @@ func Top2(req *db.YonghuRequest) (interface{}, error) {
 		return nil, err
 	}
 
-	// token
-	claims := db.CustomClaims{
-		Uid: user.Uid,
-	}
-	token, err := db.NewJWT().CreateToken(claims)
+	// token TODO
+	token, err := utils.GetToken(user.Uid)
 	if err != nil {
 		return nil, err
 	}
@@ -68,23 +60,7 @@ func Top2(req *db.YonghuRequest) (interface{}, error) {
 
 	//////////////////////////
 	// redis ...
-	uy, err := json.Marshal(user)
-	if err != nil {
-		return nil, err
-	}
-	// set 两个redis key
-	// user_id {user}
-	// token {user}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, user.Uid), string(uy))
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, token), string(uy))
-	if err != nil {
-		return nil, err
-	}
-
-	manager.addUpdate(user)
+	manager.setUser(user)
 
 	// response
 	res := db.YonghuResponse{
@@ -103,15 +79,8 @@ func Top2(req *db.YonghuRequest) (interface{}, error) {
 
 // Top3 Top3
 func Top3(req *db.YonghuRequest) (interface{}, error) {
-	conn := global.REDIS.Get()
-	defer conn.Close()
 
-	userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token)))
-	if err != nil {
-		return nil, err
-	}
-	user := db.Yonghu{}
-	err = json.Unmarshal([]byte(userStr), &user)
+	user, err := manager.getUserByToken(req.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -140,15 +109,8 @@ func Top3(req *db.YonghuRequest) (interface{}, error) {
 
 // Top5 Top5
 func Top5(req *db.YonghuRequest) (interface{}, error) {
-	conn := global.REDIS.Get()
-	defer conn.Close()
 
-	userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token)))
-	if err != nil {
-		return nil, err
-	}
-	user := db.Yonghu{}
-	err = json.Unmarshal([]byte(userStr), &user)
+	user, err := manager.getUserByToken(req.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +120,7 @@ func Top5(req *db.YonghuRequest) (interface{}, error) {
 	user.Lastlogintime = time.Now()
 	///////////////////////////
 
-	manager.addUpdate(&user)
+	manager.setUser(user)
 
 	// response
 	res := db.YonghuResponse{
@@ -187,8 +149,6 @@ func Top6(req *db.YonghuRequest) (interface{}, error) {
 
 // Top101 添加任务
 func Top101(req *db.AddRenwuRequest) (interface{}, error) {
-	conn := global.REDIS.Get()
-	defer conn.Close()
 
 	var err error
 
@@ -216,6 +176,10 @@ func Top101(req *db.AddRenwuRequest) (interface{}, error) {
 		IsOnlyOneTime: req.IsOnlyOneTime,
 		Lqzbyc:        req.Lqzbyc,
 		Ipsync:        req.Ipsync,
+
+		// tqjs
+		Tiqianjieshu: int(req.Lx / 2),
+		Stop:         0,
 	}
 
 	renwu, err = db.AddRenwu(renwu)
@@ -223,15 +187,7 @@ func Top101(req *db.AddRenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 	////////////
-	// update
-	rb, err := json.Marshal(renwu)
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, renwu.Rid), string(rb))
-	if err != nil {
-		return nil, err
-	}
+	manager.setRenwu(renwu)
 
 	return nil, nil
 
@@ -244,32 +200,17 @@ func Top101(req *db.AddRenwuRequest) (interface{}, error) {
 // 设备访问服务器获取任务 先查询该设备有没有历史任务未完成 如果有就返回历史任务
 func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 
-	conn := global.REDIS.Get()
-	defer conn.Close()
-
 	tlock := &sync.Mutex{}
 	wg := sync.WaitGroup{}
 
-	// user
-	userStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token)))
-	if err != nil {
-		return nil, err
-	}
-	user := db.Yonghu{}
-	err = json.Unmarshal([]byte(userStr), &user)
+	user, err := manager.getUserByToken(req.Token)
 	if err != nil {
 		return nil, err
 	}
 	///////////////////////////
-
 	// get renwu 用户存在任务
 	if user.Rid > 0 {
-		renwuStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, user.Rid)))
-		if err != nil {
-			return nil, err
-		}
-		renwu := db.Renwu{}
-		err = json.Unmarshal([]byte(renwuStr), &renwu)
+		renwu, err := manager.getRenwu(user.Rid)
 		if err != nil {
 			return nil, err
 		}
@@ -287,30 +228,6 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 				PageSize: 99999999,
 			},
 		}
-		// TODO
-		okrenwus, err := db.ListRenwu(QU)
-		if err != nil {
-			return nil, err
-		}
-		if len(okrenwus) == 0 {
-			return nil, errors.New("无满足的任务")
-		}
-
-		tmp := okrenwus[0]
-		if tmp.Shengyusl == 0 {
-			return nil, errors.New("任务数量为0")
-		}
-		// mysql maybe not new
-		// renwu
-		renwuStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, user.Rid)))
-		if err != nil {
-			return nil, err
-		}
-		toGetRenwu := db.Renwu{}
-		err = json.Unmarshal([]byte(renwuStr), &toGetRenwu)
-		if err != nil {
-			return nil, err
-		}
 	*/
 
 	// 遍历redis的所有任务 这里对cpu性能要求很高
@@ -321,20 +238,15 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 		go func(rid int) {
 			defer wg.Done()
 			// renwu
-			renwuStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, rid)))
+			tmp, err := manager.getRenwu(rid)
 			if err != nil {
-				return
-			}
-			tmp := db.Renwu{}
-			err = json.Unmarshal([]byte(renwuStr), &tmp)
-			if err != nil {
-				return
+
 			}
 			// 条件判断是否满足
 			if tmp.Sfsl == req.Bdzhqz {
 				tlock.Lock()
 				defer tlock.Unlock()
-				okRenwus = append(okRenwus, &tmp)
+				okRenwus = append(okRenwus, tmp)
 			}
 
 		}(renwuid)
@@ -353,18 +265,13 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	//
 	// 判断任务是否满足
 	//
-	// 1. 存在任务领取日志
-	renwulogStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, user.Uid, toGetRenwu.Rid)))
-	if err != nil {
+	// 1. 是否存在任务领取日志
+	renwulog, err := manager.getRenwulog(user.Uid, user.Rid)
+	if !errors.Is(gorm.ErrRecordNotFound, err) {
 		return nil, err
 	}
-	if len(renwulogStr) > 0 {
+	if renwulog != nil {
 		// 存在任务日志
-		renwulog := db.Rwlogs{}
-		err = json.Unmarshal([]byte(renwulogStr), &renwulog)
-		if err != nil {
-			return nil, err
-		}
 		// 1. 部分任务一个用户只能领取一次
 		if toGetRenwu.IsOnlyOneTime == 1 {
 			return nil, errors.New("任务一个用户只能领取一次")
@@ -380,36 +287,17 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 		if renwulog.Isadd == db.Rwlogs_isadd_ABADON_TASK_EXCEPT_FIVE_MIN {
 			return nil, errors.New("用户5分钟内做这个任务失败")
 		}
-
 	}
 
 	// 4. // 4. 还有个条件是限制一个任务  同ip只能进多少台
-	_key := fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_IP, req.Ipaddr, toGetRenwu.Rid)
-	renwuiplogStr, err := redis.String(conn.Do("get", _key))
+	_limit, err := manager.getIpLimit(req.Ipaddr, toGetRenwu.Rid)
 	if err != nil {
 		return nil, err
 	}
-	renwuiplog := db.Iplogs{}
-	if len(renwuiplogStr) > 0 {
-		err = json.Unmarshal([]byte(renwuiplogStr), &renwuiplog)
-		if err != nil {
-			return nil, err
-		}
-		if renwuiplog.Times >= toGetRenwu.Ipsync {
-			return nil, errors.New("任务限制同ip只能进多少台")
-		}
-	} else {
-		// 该ip第一次使用
-		renwuiplog.IP = req.Ipaddr
-		renwuiplog.Rid = toGetRenwu.Rid
-		renwuiplog.Day = time.Now()
-		renwuiplog.Times = 0
-		// 需要先创建
-		_, err = db.AddIplogs(&renwuiplog)
-		if err != nil {
-			return nil, err
-		}
+	if _limit >= toGetRenwu.Ipsync {
+		return nil, errors.New("任务限制同ip只能进多少台")
 	}
+	////////////////////////// 添加任务了
 
 	// lock 任务
 	_, ok := manager.renwuSet[toGetRenwu.Rid]
@@ -428,7 +316,7 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	// num--
 	toGetRenwu.Shengyusl = toGetRenwu.Shengyusl - 1
 	// 记录任务添加历史记录
-	rwlog := db.Rwlogs{
+	rwlog := &db.Rwlogs{
 		Uid:    user.Uid,
 		Rid:    toGetRenwu.Rid,
 		Userid: user.Uid,
@@ -436,72 +324,35 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 		Isadd:  db.Rwlogs_isadd_GET_TASK,
 		Day:    time.Now(),
 	}
+	_, err = db.AddRwlogs(rwlog)
+	if err != nil {
+		return nil, err
+	}
 
 	/////////////////////////////
 	// update
-	// renwulog
-	renwlogb, err := json.Marshal(&rwlog)
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, rwlog.Userid, rwlog.Rid), string(renwlogb))
-	if err != nil {
-		return nil, err
-	}
-	//renwu
-	rb, err := json.Marshal(toGetRenwu)
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, toGetRenwu.Rid), string(rb))
-	if err != nil {
-		return nil, err
-	}
-	// user
-	uy, err := json.Marshal(user)
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, user.Uid), string(uy))
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER_TOKEN, req.Token), string(uy))
-	if err != nil {
-		return nil, err
-	}
-	// iplog
-	renwuiplog.Times += 1
-	rls, err := json.Marshal(renwuiplog)
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_IP, req.Ipaddr, toGetRenwu.Rid), rls)
-	if err != nil {
-		return nil, err
-	}
+	manager.setIpLimit(req.Ipaddr, toGetRenwu.Rid)
+	manager.setRenwu(toGetRenwu)
+	manager.setUser(user)
 
-	manager.addUpdate(&user)
-	manager.addUpdate(&toGetRenwu)
-	manager.addUpdate(&renwuiplog)
-	manager.addCreate(&rwlog)
+	// //// response  你根据需求添加或者减少
+	res := &db.RenwuResponse{}
+	res.Code = 1
+	res.Lx = toGetRenwu.Leixing
+	res.Dzcs = toGetRenwu.Dzcs
+	res.Xhc = toGetRenwu.Xianghuangche
+	res.Rwxh = ""
+	res.Time = 0
+	res.Name = toGetRenwu.Name
+	res.Id = toGetRenwu.Rid
+	res.Url = toGetRenwu.Url
+	res.Jrfs = 0
+	res.Sfsl = toGetRenwu.Sfsl
+	res.Sfgj = toGetRenwu.Sfgj
+	res.Rwjd = 0
+	res.Gsfsp = toGetRenwu.Gsfsp
 
-	// //// response
-	// res.Code = 1
-	// res.Lx = renwu.Leixing
-	// res.Dzcs = renwu.Dzcs
-	// res.Xhc = renwu.Xianghuangche
-	// res.Rwxh = ""
-	// res.Time = 0
-	// res.Name = renwu.Name
-	// res.Id = renwu.Rid
-	// res.Url = renwu.Url
-	// res.Jrfs = 0
-	// res.Sfsl = renwu.Sfsl
-	// res.Sfgj = renwu.Sfgj
-	// res.Rwjd = 0
-	// res.Gsfsp = renwu.Gsfsp
-
-	return toGetRenwu, nil
+	// 5、用户获取任务不能把任务表的所有信息都返回给用户，这个接口里面有。可以考虑把需要的信息写入
+	return res, nil
 
 }

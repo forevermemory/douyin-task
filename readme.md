@@ -6,24 +6,38 @@ txlogs 提现记录
 jblogs 是记录 money 变动的
 rwlogs 是记录任务变动
 
-ALTER TABLE `renwu`
-ADD COLUMN `is_only_one_time` int(1) NOT NULL DEFAULT 0 COMMENT '是否一个用户只能领取一次 0 否 1 是' AFTER `xtbbh`;
-ADD COLUMN `lqzbyc` int(1) NOT NULL DEFAULT 0 COMMENT '一天只能领取那个主播任务一次 0 否 1 是' AFTER `is_only_one_time`;
-ADD COLUMN `ipsync` int(11) NOT NULL DEFAULT 0 COMMENT '同 ip 只能进多少台' AFTER `lqzbyc`;
+-   table change
+    ALTER TABLE `renwu`
+    ADD COLUMN `is_only_one_time` int(1) NOT NULL DEFAULT 0 COMMENT '是否一个用户只能领取一次 0 否 1 是' AFTER `xtbbh`;
+    ADD COLUMN `lqzbyc` int(1) NOT NULL DEFAULT 0 COMMENT '一天只能领取那个主播任务一次 0 否 1 是' AFTER `is_only_one_time`;
+    ADD COLUMN `ipsync` int(11) NOT NULL DEFAULT 0 COMMENT '同 ip 只能进多少台' AFTER `lqzbyc`;
 
-CREATE TABLE `iplogs` (
-`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-`uid` int(10) NOT NULL,
-`rid` int(10) unsigned NOT NULL,
-`userid` bigint(20) unsigned DEFAULT NULL,
-`ip` varchar(32) DEFAULT NULL,
-`times` int(1) NOT NULL DEFAULT '0',
-`day` datetime DEFAULT NULL,
-PRIMARY KEY (`id`) USING BTREE,
-) ENGINE=MyISAM AUTO_INCREMENT=115369 DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC
+### 7.31 上午
 
 1. 用户添加任务从 redis 过滤出符合的任务
 2. 部分任务一个用户只能领取一次 (mysql 加了字段 is_only_one_time)
 3. 一天只能领取那个主播任务一次 (mysql 加了字段 lqzbyc)
 4. 用户 5 分钟内做这个任务失败了 下次就不让他领取这个任务
 5. 还有个条件是限制一个任务 同 ip 只能进多少台 (mysql 加了字段 ipsync)
+
+### 7.31 待优化
+
+1、任务架构问题
+建议用一个线程定时获取 mysql 有效任务(shengyusl>0 and stop=0)，到 redis 里面，redis 可以用集合或者其他方式
+
+2、我看目前用户表是用的 token 做的主键，我这边 token 是用的 aes 加密 解密后可以得到 uid，我待会把加密解密函数发给你，用 uid 做 key
+
+3、top6：可以直接用语句 SELECT `account` FROM `yonghu` WHERE `dyid`= 返回用户提交的 dyid 绑定的账户名
+
+4、top101：添加任务的时候 tqjs 为数量的 0.5 ，stop 默认为 0，biaoshi 是唯一的，防止重复放单
+
+5、用户获取任务不能把任务表的所有信息都返回给用户，这个接口里面有。可以考虑把需要的信息写入 redis 其他的不写
+
+6、限制 ip 可以写进 redis 用 rid+ip 地址 存储计数，达到限制比如 20 返回失败
+
+### 8.1 优化 7.31 问题
+
+-   1. 7.31 的修改已完成
+-   2. table change 的几个字段变更 必须要有
+-   3. 代码优化
+-   4. Top2 生成 token `utils.GetToken`你来吧

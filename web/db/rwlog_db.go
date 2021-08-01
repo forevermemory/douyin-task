@@ -64,7 +64,7 @@ func GetRwlogsByID(id int) (*Rwlogs, error) {
 	return o, err
 }
 
-// GetRwlogsByruandyonghuid 根据wrid wid查询一个
+// GetRwlogsByruandyonghuid 根据uid rid查询一个
 func GetRwlogsByruandyonghuid(uid, rid int) (*Rwlogs, error) {
 	db := global.MYSQL
 	o := &Rwlogs{}

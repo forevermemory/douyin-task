@@ -77,13 +77,14 @@ func (o *Yonghu) TableName() string {
 // CheckDouyinIDRepeat CheckDouyinIDRepeat
 func CheckDouyinIDRepeat(dyid string) ([]map[string]interface{}, error) {
 
-	sql := `
-	SELECT dyid,count(dyid) num ,GROUP_CONCAT(Account) account  from yonghu 
-	where dyid = ?
-	GROUP BY dyid
+	// sql := `
+	// SELECT dyid,count(dyid) num ,GROUP_CONCAT(Account) account  from yonghu
+	// where dyid = ?
+	// GROUP BY dyid
 
-	`
+	// `
 
+	sql := "SELECT `account` FROM `yonghu` WHERE `dyid`= ?"
 	rows, err := global.MYSQL.Raw(sql, dyid).Rows()
 	if err != nil {
 		return nil, err
