@@ -66,10 +66,8 @@ func (m *RedisSyncToMysqlManager) setRenwu(renwu *db.Renwu) (interface{}, error)
 		return nil, err
 	}
 
-	//
-	if _, ok := m.renwuIDSet[renwu.Rid]; !ok {
-		m.renwuIDSet[renwu.Rid] = 1
-	}
+	// 更新到内存
+	m.renwuIDSet[renwu.Rid] = renwu
 
 	m.addUpdate(renwu)
 	return nil, nil

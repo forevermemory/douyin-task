@@ -1,6 +1,7 @@
 package service
 
 import (
+	"douyin/global"
 	"douyin/utils"
 	"douyin/web/db"
 	"errors"
@@ -172,11 +173,6 @@ func Top101(req *db.AddRenwuRequest) (interface{}, error) {
 		Zbid:         req.Zbid,
 		Douyinid:     req.Userid,
 
-		// README 这里新增任务也把这几个条件带上
-		IsOnlyOneTime: req.IsOnlyOneTime,
-		Lqzbyc:        req.Lqzbyc,
-		Ipsync:        req.Ipsync,
-
 		// tqjs
 		Tiqianjieshu: int(req.Lx / 2),
 		Stop:         0,
@@ -231,26 +227,47 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	*/
 
 	// 遍历redis的所有任务 这里对cpu性能要求很高
-	okRenwus := make([]*db.Renwu, 8)
-	for renwuid := range manager.renwuSet {
+	okRenwus := make([]*db.Renwu, 0)
+	for _, rw := range manager.renwuIDSet {
 		wg.Add(1)
 
-		go func(rid int) {
+		go func(rw *db.Renwu) {
 			defer wg.Done()
 			// renwu
-			tmp, err := manager.getRenwu(rid)
-			if err != nil {
 
+			// 1. 是否送礼
+			if rw.Sfsl != req.Bdzhqz {
+				return
 			}
-			// 条件判断是否满足
-			if tmp.Sfsl == req.Bdzhqz {
-				tlock.Lock()
-				defer tlock.Unlock()
-				okRenwus = append(okRenwus, tmp)
+			// 2. 如果任务类型是2 就说明一天只能领取一次
+			renwulog, err := manager.getRenwulog(user.Uid, user.Rid)
+			if !errors.Is(gorm.ErrRecordNotFound, err) {
+				return
+			}
+			if rw.Leixing == 2 {
+				if renwulog != nil {
+					if renwulog.Day.Day() == time.Now().Day() {
+						// 说明是当天领的任务
+						return
+					}
+				}
+			} else if rw.Leixing == 4 {
+				// 3. 如果任务类型是4 点赞次数是777 就说明这个任务一个用户只能领取一次
+				// 就从任务完成记录里面查找用户uid 如果有就跳过这个任务
+				if rw.Dzcs == 777 {
+					if renwulog != nil {
+						return
+					}
+				}
 			}
 
-		}(renwuid)
+			// 满足条件的任务
+			tlock.Lock()
+			defer tlock.Unlock()
+			okRenwus = append(okRenwus, rw)
+		}(rw)
 	}
+
 	fmt.Println("wait...", user.Uid)
 	wg.Wait()
 	fmt.Println("done...", user.Uid)
@@ -265,25 +282,13 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	//
 	// 判断任务是否满足
 	//
-	// 1. 是否存在任务领取日志
+
+	// 3. 用户5分钟内做这个任务失败了 下次就不让他领取这个任务
 	renwulog, err := manager.getRenwulog(user.Uid, user.Rid)
 	if !errors.Is(gorm.ErrRecordNotFound, err) {
 		return nil, err
 	}
 	if renwulog != nil {
-		// 存在任务日志
-		// 1. 部分任务一个用户只能领取一次
-		if toGetRenwu.IsOnlyOneTime == 1 {
-			return nil, errors.New("任务一个用户只能领取一次")
-		}
-		// 2. 一天只能领取那个主播任务一次
-		if toGetRenwu.Lqzbyc == 1 {
-			if renwulog.Day.Day() == time.Now().Day() {
-				// 说明是当天领的任务
-				return nil, errors.New("一天只能领取那个主播任务一次")
-			}
-		}
-		// 3. 用户5分钟内做这个任务失败了 下次就不让他领取这个任务
 		if renwulog.Isadd == db.Rwlogs_isadd_ABADON_TASK_EXCEPT_FIVE_MIN {
 			return nil, errors.New("用户5分钟内做这个任务失败")
 		}
@@ -294,22 +299,22 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _limit >= toGetRenwu.Ipsync {
+	if _limit >= global.MAX_IP_TASK {
 		return nil, errors.New("任务限制同ip只能进多少台")
 	}
 	////////////////////////// 添加任务了
 
 	// lock 任务
-	_, ok := manager.renwuSet[toGetRenwu.Rid]
+	_, ok := manager.renwuLock[toGetRenwu.Rid]
 	if ok {
 		// lock
 		return nil, errors.New("renwu is lock")
 	}
 	// unlock --> add lock
-	manager.renwuSet[toGetRenwu.Rid] = 1
+	manager.renwuLock[toGetRenwu.Rid] = 1
 	defer func() {
 		// unlock
-		delete(manager.renwuSet, toGetRenwu.Rid)
+		delete(manager.renwuLock, toGetRenwu.Rid)
 	}()
 
 	user.Rid = toGetRenwu.Rid

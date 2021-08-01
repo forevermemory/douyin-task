@@ -11,9 +11,9 @@ import (
 var manager = &RedisSyncToMysqlManager{
 	update:     make(chan interface{}, 1024),
 	create:     make(chan interface{}, 1024),
-	renwuSet:   map[int]int{},
-	renwuIDSet: map[int]int{},
-	yonghuSet:  map[int]int{},
+	renwuLock:  make(map[int]int),
+	renwuIDSet: make(map[int]*db.Renwu),
+	yonghuSet:  make(map[int]int),
 
 	lock: &sync.Mutex{},
 }
@@ -27,10 +27,10 @@ type RedisSyncToMysqlManager struct {
 	create chan interface{}
 
 	// 任务编号是否被锁
-	renwuSet map[int]int
+	renwuLock map[int]int
 
 	// 任务编号集合
-	renwuIDSet map[int]int
+	renwuIDSet map[int]*db.Renwu
 
 	// 用户id集合
 	yonghuSet map[int]int

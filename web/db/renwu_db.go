@@ -84,9 +84,9 @@ type AddRenwuRequest struct {
 	Zbid   int    `json:"zbid" form:"zbid"`     //直播id
 	Userid string `json:"userid" form:"userid"` //直播id
 
-	IsOnlyOneTime int `json:"is_only_one_time" form:"is_only_one_time"` //是否一个用户只能领取一次 0否 1是
-	Lqzbyc        int `json:"lqzbyc" form:"lqzbyc"`                     //一天只能领取那个主播任务一次 0 否 1是
-	Ipsync        int ` json:"ipsync" form:"ipsync"`                    //  同ip只能进多少台
+	// IsOnlyOneTime int `json:"is_only_one_time" form:"is_only_one_time"` //是否一个用户只能领取一次 0否 1是
+	// Lqzbyc        int `json:"lqzbyc" form:"lqzbyc"`                     //一天只能领取那个主播任务一次 0 否 1是
+	// Ipsync        int ` json:"ipsync" form:"ipsync"`                    //  同ip只能进多少台
 
 }
 
@@ -121,9 +121,9 @@ type Renwu struct {
 	Rjbbh         int    `gorm:"column:rjbbh" json:"rjbbh" form:"rjbbh"`                         //任务限制-软件版本号
 	Xtbbh         int    `gorm:"column:xtbbh" json:"xtbbh" form:"xtbbh"`                         //任务限制-系统版本号
 
-	IsOnlyOneTime int `gorm:"column:is_only_one_time" json:"is_only_one_time" form:"is_only_one_time"` //是否一个用户只能领取一次 0否 1是
-	Lqzbyc        int `gorm:"column:lqzbyc" json:"lqzbyc" form:"lqzbyc"`                               //一天只能领取那个主播任务一次 0 否 1是
-	Ipsync        int `gorm:"column:ipsync" json:"ipsync" form:"ipsync"`                               //  同ip只能进多少台
+	// IsOnlyOneTime int `gorm:"column:is_only_one_time" json:"is_only_one_time" form:"is_only_one_time"` //是否一个用户只能领取一次 0否 1是
+	// Lqzbyc        int `gorm:"column:lqzbyc" json:"lqzbyc" form:"lqzbyc"`                               //一天只能领取那个主播任务一次 0 否 1是
+	// Ipsync        int `gorm:"column:ipsync" json:"ipsync" form:"ipsync"`                               //  同ip只能进多少台
 
 	Page
 }
