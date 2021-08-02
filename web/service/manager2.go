@@ -104,6 +104,9 @@ func (m *RedisSyncToMysqlManager) getRenwu(renwuid int) (*db.Renwu, error) {
 		return nil, err
 	}
 
+	// 更新到内存
+	m.renwuIDSet[renwu.Rid] = renwu
+
 	return renwu, nil
 }
 
