@@ -5,9 +5,7 @@ import (
 	"douyin/utils"
 	"douyin/web/db"
 	"errors"
-	"fmt"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -206,9 +204,6 @@ func Top101(req *db.AddRenwuRequest) (interface{}, error) {
 // 设备访问服务器获取任务 先查询该设备有没有历史任务未完成 如果有就返回历史任务
 func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 
-	tlock := &sync.Mutex{}
-	wg := sync.WaitGroup{}
-
 	user, err := manager.getUserByToken(req.Token)
 	if err != nil {
 		return nil, err
@@ -224,103 +219,80 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	}
 
 	// 查询是否存在满足条件的任务
-	/*
-		bdzhqz 任务表的是否送礼 sfsl 2就是送礼物任务 1就是不送礼物任务
-	*/
-	/*
-		QU := &db.Renwu{
-			Sfsl: req.Bdzhqz,
-			Page: db.Page{
-				PageSize: 99999999,
-			},
-		}
-	*/
+	var toGetRenwu *db.Renwu
 
-	// 遍历redis的所有任务 这里对cpu性能要求很高
-	okRenwus := make([]*db.Renwu, 0)
+	// 遍历redis的所有任务
 	for _, rw := range manager.renwuIDSet {
-		wg.Add(1)
-
-		go func(rw *db.Renwu) {
-			defer wg.Done()
-			// renwu
-
-			// 1. 是否送礼
-			if rw.Sfsl != req.Bdzhqz {
-				return
-			}
-			// 2. 如果任务类型是2 就说明一天只能领取一次
-			renwulog, err := manager.getRenwulog(user.Uid, user.Rid)
-			if !errors.Is(gorm.ErrRecordNotFound, err) {
-				return
-			}
-			if rw.Leixing == 2 {
-				if renwulog != nil {
-					if renwulog.Day.Day() == time.Now().Day() {
-						// 说明是当天领的任务
-						return
-					}
-				}
-			} else if rw.Leixing == 4 {
-				// 3. 如果任务类型是4 点赞次数是777 就说明这个任务一个用户只能领取一次
-				// 就从任务完成记录里面查找用户uid 如果有就跳过这个任务
-				if rw.Dzcs == 777 {
-					if renwulog != nil {
-						return
-					}
-				}
-			}
-
-			// 4. 用户5分钟内做这个任务失败了 下次就不让他领取这个任务
+		// 1. 是否送礼
+		if rw.Sfsl != req.Bdzhqz {
+			continue
+		}
+		// 2. 如果任务类型是2 就说明一天只能领取一次
+		renwulog, err := manager.getRenwulog(user.Uid, user.Rid)
+		if !errors.Is(gorm.ErrRecordNotFound, err) {
+			continue
+		}
+		if rw.Leixing == 2 {
 			if renwulog != nil {
-				if renwulog.Isadd == db.Rwlogs_isadd_ABADON_TASK_NOT_IN {
-					return
+				if renwulog.Day.Day() == time.Now().Day() {
+					// 说明是当天领的任务
+					continue
 				}
 			}
-			// 5. // . 还有个条件是限制一个任务  同ip只能进多少台
-			_limit, err := manager.getIpLimit(req.Ipaddr, rw.Rid)
-			if err != nil {
-				return
+		} else if rw.Leixing == 4 {
+			// 3. 如果任务类型是4 点赞次数是777 就说明这个任务一个用户只能领取一次
+			// 就从任务完成记录里面查找用户uid 如果有就跳过这个任务
+			if rw.Dzcs == 777 {
+				if renwulog != nil {
+					continue
+				}
 			}
-			if _limit >= global.MAX_IP_TASK {
-				return
-			}
+		}
 
-			// 满足条件的任务
-			tlock.Lock()
-			defer tlock.Unlock()
-			okRenwus = append(okRenwus, rw)
-		}(rw)
+		// 4. 用户5分钟内做这个任务失败了 下次就不让他领取这个任务
+		if renwulog != nil {
+			if renwulog.Isadd == db.Rwlogs_isadd_ABADON_TASK_NOT_IN {
+				continue
+			}
+		}
+		// 5.  还有个条件是限制一个任务  同ip只能进多少台
+		_limit, err := manager.getIpLimit(req.Ipaddr, rw.Rid)
+		if err != nil {
+			continue
+		}
+		if _limit >= global.MAX_IP_TASK {
+			continue
+		}
+		// 满足条件的任务////////////////
+		// 获取任务 条件都满足后 进锁 进不去就换下一个任务判断条件
+		// lock 任务
+		_, ok := manager.renwuLock[toGetRenwu.Rid]
+		if ok {
+			// locked
+			continue
+		}
+		// unlock --> add lock
+		manager.renwuLock[toGetRenwu.Rid] = 1
+		defer func() {
+			// unlock
+			delete(manager.renwuLock, toGetRenwu.Rid)
+		}()
+		toGetRenwu = rw
+		break
 	}
 
-	fmt.Println("wait...", user.Uid)
-	wg.Wait()
-	fmt.Println("done...", user.Uid)
-
-	if len(okRenwus) == 0 {
+	if toGetRenwu == nil {
 		return nil, errors.New("无满足的任务")
 	}
-	toGetRenwu := okRenwus[0]
+
 	if toGetRenwu.Shengyusl == 0 {
-		return nil, errors.New("任务数量为0")
+		return nil, errors.New("当前任务数量为0")
 	}
 	//
 	// 判断任务是否满足
 	//
 
 	////////////////////////// 添加任务了
-	// lock 任务
-	_, ok := manager.renwuLock[toGetRenwu.Rid]
-	if ok {
-		// lock
-		return nil, errors.New("renwu is lock")
-	}
-	// unlock --> add lock
-	manager.renwuLock[toGetRenwu.Rid] = 1
-	defer func() {
-		// unlock
-		delete(manager.renwuLock, toGetRenwu.Rid)
-	}()
 
 	user.Rid = toGetRenwu.Rid
 	// num--
