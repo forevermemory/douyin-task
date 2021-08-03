@@ -271,6 +271,21 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 				}
 			}
 
+			// 4. 用户5分钟内做这个任务失败了 下次就不让他领取这个任务
+			if renwulog != nil {
+				if renwulog.Isadd == db.Rwlogs_isadd_ABADON_TASK_NOT_IN {
+					return
+				}
+			}
+			// 5. // . 还有个条件是限制一个任务  同ip只能进多少台
+			_limit, err := manager.getIpLimit(req.Ipaddr, rw.Rid)
+			if err != nil {
+				return
+			}
+			if _limit >= global.MAX_IP_TASK {
+				return
+			}
+
 			// 满足条件的任务
 			tlock.Lock()
 			defer tlock.Unlock()
@@ -293,27 +308,7 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	// 判断任务是否满足
 	//
 
-	// 3. 用户5分钟内做这个任务失败了 下次就不让他领取这个任务
-	renwulog, err := manager.getRenwulog(user.Uid, user.Rid)
-	if !errors.Is(gorm.ErrRecordNotFound, err) {
-		return nil, err
-	}
-	if renwulog != nil {
-		if renwulog.Isadd == db.Rwlogs_isadd_ABADON_TASK_EXCEPT_FIVE_MIN {
-			return nil, errors.New("用户5分钟内做这个任务失败")
-		}
-	}
-
-	// 4. // 4. 还有个条件是限制一个任务  同ip只能进多少台
-	_limit, err := manager.getIpLimit(req.Ipaddr, toGetRenwu.Rid)
-	if err != nil {
-		return nil, err
-	}
-	if _limit >= global.MAX_IP_TASK {
-		return nil, errors.New("任务限制同ip只能进多少台")
-	}
 	////////////////////////// 添加任务了
-
 	// lock 任务
 	_, ok := manager.renwuLock[toGetRenwu.Rid]
 	if ok {

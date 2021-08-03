@@ -78,7 +78,7 @@ func (t *Task) task1() (interface{}, error) {
 					continue
 				}
 				/////////////
-				rwlog.Isadd = db.Rwlogs_isadd_ABADON_TASK_EXCEPT_FIVE_MIN
+				rwlog.Isadd = db.Rwlogs_isadd_ABADON_TASK_NOT_IN
 				/////////////
 
 				manager.setUser(user)
