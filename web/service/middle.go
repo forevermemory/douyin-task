@@ -46,10 +46,13 @@ func Middle4(req *db.RenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 	// 锁
-	_, ok := manager.renwuLock[renwu.Rid]
-	if ok {
-		// locked
-		return nil, errors.New("任务正在被锁定")
+	for {
+		_, ok := manager.renwuLock[renwu.Rid]
+		if ok {
+			// locked
+			continue
+		}
+		break
 	}
 	// unlock --> add lock
 	manager.renwuLock[renwu.Rid] = 1
