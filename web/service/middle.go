@@ -46,18 +46,17 @@ func Middle4(req *db.RenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 	// 锁
-	exist, err := manager.getRenwuLock(renwu.Rid)
-	if err != nil {
-		return nil, err
+	_, ok := manager.renwuLock[renwu.Rid]
+	if ok {
+		// locked
+		return nil, errors.New("任务正在被锁定")
 	}
-	if exist {
-		return nil, errors.New("任务暂时锁定")
-	}
-	// 加锁
-	_, err = manager.setRenwuLock(renwu.Rid)
-	if err != nil {
-		return nil, err
-	}
+	// unlock --> add lock
+	manager.renwuLock[renwu.Rid] = 1
+	defer func() {
+		// unlock
+		delete(manager.renwuLock, renwu.Rid)
+	}()
 
 	rwlog, err := manager.getRenwulog(user.Uid, user.Rid)
 	if err != nil {
@@ -69,12 +68,6 @@ func Middle4(req *db.RenwuRequest) (interface{}, error) {
 	user.Rid = -1 // if 0 gorm will ignore it
 	user.Rwjd = -1
 	/////////////////////////////
-	// 解锁
-	_, err = manager.delRenwuLock(renwu.Rid)
-	if err != nil {
-		return nil, err
-	}
-
 	// update
 	manager.setRenwu(renwu)
 	manager.setUser(user)
