@@ -45,6 +45,20 @@ func Middle4(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	// 锁
+	exist, err := manager.getRenwuLock(renwu.Rid)
+	if err != nil {
+		return nil, err
+	}
+	if exist {
+		return nil, errors.New("任务暂时锁定")
+	}
+	// 加锁
+	_, err = manager.setRenwuLock(renwu.Rid)
+	if err != nil {
+		return nil, err
+	}
+
 	rwlog, err := manager.getRenwulog(user.Uid, user.Rid)
 	if err != nil {
 		return nil, err
@@ -55,6 +69,12 @@ func Middle4(req *db.RenwuRequest) (interface{}, error) {
 	user.Rid = -1 // if 0 gorm will ignore it
 	user.Rwjd = -1
 	/////////////////////////////
+	// 解锁
+	_, err = manager.delRenwuLock(renwu.Rid)
+	if err != nil {
+		return nil, err
+	}
+
 	// update
 	manager.setRenwu(renwu)
 	manager.setUser(user)
@@ -86,8 +106,15 @@ func Middle3(req *db.RenwuRequest) (interface{}, error) {
 	}
 	// 用户余额增加任务佣金。
 	user.Money += renwu.Rwmoney
+	// 上级用户 // 上级在用户增加余额的时候会分 10%
+	shangji, err := manager.getUser(user.Shangjiuid)
+	if err != nil {
+		return nil, err
+	}
+	shangji.Money += int(renwu.Rwmoney / 10)
 	/////////////////////////////
 	manager.setUser(user)
+	manager.setUser(shangji)
 
 	////// response
 

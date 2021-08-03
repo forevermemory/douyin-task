@@ -15,8 +15,11 @@ type YonghuRequest struct {
 	Zfbname  string `json:"zfbname"`
 	Sj       string `json:"sj"`
 
-	Token      string `json:"token"`
-	Dyid       string `json:"dyid"`
+	Token string `json:"token"`
+	Dyid  string `json:"dyid"`
+
+	Shangjiuid int ` json:"shangjiUID" form:"shangjiUID"` //上级uid
+
 	Registerip string
 }
 

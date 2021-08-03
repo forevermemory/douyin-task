@@ -3,6 +3,7 @@ package global
 const (
 	REDIS_PREFIX_USER       string = "user_"
 	REDIS_PREFIX_RENWU      string = "renwu_"
+	REDIS_PREFIX_RENWU_LOCK string = "renwu_lock_"
 	REDIS_PREFIX_USER_TOKEN string = ""
 
 	// renwulog_${userid}_${renwuid}

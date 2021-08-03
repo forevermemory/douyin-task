@@ -5,6 +5,7 @@ import (
 	"douyin/utils"
 	"douyin/web/db"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/gomodule/redigo/redis"
@@ -75,6 +76,7 @@ func (m *RedisSyncToMysqlManager) setRenwu(renwu *db.Renwu) (interface{}, error)
 func (m *RedisSyncToMysqlManager) getRenwu(renwuid int) (*db.Renwu, error) {
 	conn := global.REDIS.Get()
 	defer conn.Close()
+
 	// renwu
 	renwu := &db.Renwu{}
 
@@ -108,6 +110,42 @@ func (m *RedisSyncToMysqlManager) getRenwu(renwuid int) (*db.Renwu, error) {
 	m.renwuIDSet[renwu.Rid] = renwu
 
 	return renwu, nil
+}
+
+func (m *RedisSyncToMysqlManager) getRenwuLock(renwuid int) (bool, error) {
+	conn := global.REDIS.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU_LOCK, renwuid))
+	if err != nil {
+		if errors.Is(err, redis.ErrNil) {
+			return false, nil
+		}
+
+		return false, err
+	}
+	return true, nil
+}
+func (m *RedisSyncToMysqlManager) setRenwuLock(renwuid int) (interface{}, error) {
+	conn := global.REDIS.Get()
+	defer conn.Close()
+	_, err := conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU_LOCK, renwuid), 1)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+func (m *RedisSyncToMysqlManager) delRenwuLock(renwuid int) (interface{}, error) {
+	conn := global.REDIS.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("del", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU_LOCK, renwuid))
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+
 }
 
 /////////////user

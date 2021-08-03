@@ -28,12 +28,15 @@ func Top1(req *db.YonghuRequest) (interface{}, error) {
 
 		Zfb:     req.Zfb,
 		Zfbname: req.Zfbname,
+
+		Shangjiuid: req.Shangjiuid,
 	}
 
 	u, err := db.AddYonghu(&user)
 	if err != nil {
 		return nil, err
 	}
+
 	// add yonghu set
 	manager.yonghuSet[user.Uid] = 1
 	return u, nil
@@ -47,6 +50,9 @@ func Top2(req *db.YonghuRequest) (interface{}, error) {
 	user, err := db.LoginUser(req.User, req.Password)
 	if err != nil {
 		return nil, err
+	}
+	if user.Onlie > 0 {
+		return nil, errors.New("repeat login")
 	}
 
 	// token TODO
@@ -115,6 +121,10 @@ func Top5(req *db.YonghuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	if user.Onlie > 0 {
+		return nil, errors.New("repeat login")
+	}
+
 	///////////////////////////
 	// 更新用户登陆时间
 	user.Lastloginip = req.Registerip

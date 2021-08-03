@@ -155,6 +155,9 @@ func Down1(req *db.RenwuRequest) (interface{}, error) {
 	// 转移所有子账号的余额到主账号上
 	var sonMoney int
 	tmpSons := make([]*db.Yonghu, 0)
+
+	ts := make(map[int]int) // sonid money
+
 	for _, son := range sons {
 		// 这里只取son的id 再从redis取
 
@@ -169,6 +172,7 @@ func Down1(req *db.RenwuRequest) (interface{}, error) {
 			tmpSons = append(tmpSons, son)
 		}
 		//////////////////
+		ts[stmp.Uid] = stmp.Money
 
 	}
 	user.Money += sonMoney
@@ -177,7 +181,18 @@ func Down1(req *db.RenwuRequest) (interface{}, error) {
 	// update
 	manager.setUser(user)
 	for _, son := range tmpSons {
-		manager.setUser(son)
+		// 主要防止转移过程中子账户有任务完成 增加金币
+		// 方案: 再获取一次子账号 防止再增加的金币被刷没了
+		stmp, err := manager.getUser(son.Uid)
+		if err != nil {
+			return nil, err
+		}
+		if ts[son.Uid] != son.Money {
+			// 金额发生变动了 这里肯定是增加了
+		}
+		// 减去旧的
+		stmp.Money = stmp.Money - ts[son.Uid]
+		manager.setUser(stmp)
 	}
 	return nil, nil
 }
