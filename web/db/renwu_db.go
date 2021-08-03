@@ -2,6 +2,7 @@ package db
 
 import (
 	"douyin/global"
+	"time"
 
 	"github.com/jinzhu/gorm"
 )
@@ -187,9 +188,12 @@ func CountRenwu(o *Renwu) (int, error) {
 
 //
 // RenuwuShenyuGreaterZero >0
+// 同步任务表只获取下单时间 5 小时内的
 func RenuwuShenyuGreaterZero() ([]*Renwu, error) {
 	db := global.MYSQL
 	res := make([]*Renwu, 0)
-	err := db.Table("renwu").Where("shengyusl > 0 ").Find(&res).Error
+
+	_time := time.Now().Unix() - 3600*5
+	err := db.Table("renwu").Where("shengyusl > 0 and fangdantime >= ?", _time).Find(&res).Error
 	return res, err
 }

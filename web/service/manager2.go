@@ -210,52 +210,70 @@ func (m *RedisSyncToMysqlManager) getUser(userid int) (*db.Yonghu, error) {
 ///////////////rwlog
 
 func (m *RedisSyncToMysqlManager) setRenwulog(rwlog *db.Rwlogs) (interface{}, error) {
-	conn := global.REDIS.Get()
-	defer conn.Close()
-	// update
-	renwlogb, err := json.Marshal(&rwlog)
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, rwlog.Uid, rwlog.Rid), string(renwlogb))
-	if err != nil {
-		return nil, err
-	}
 	m.addUpdate(rwlog)
 	return nil, nil
 }
+
 func (m *RedisSyncToMysqlManager) getRenwulog(userid int, renwuid int) (*db.Rwlogs, error) {
-	conn := global.REDIS.Get()
-	defer conn.Close()
-
-	rwlog := &db.Rwlogs{}
-
-	renwulogStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, userid, renwuid)))
-	if err != nil {
-		// 走mysql查询
-		rwlog, err = db.GetRwlogsByruandyonghuid(userid, renwuid)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		if len(renwulogStr) > 0 {
-			err = json.Unmarshal([]byte(renwulogStr), &rwlog)
-			if err != nil {
-				return nil, err
-			}
-			// return rwlog, nil
-		}
-	}
-
-	// update
-	renwlogb, err := json.Marshal(&rwlog)
+	// 走mysql查询
+	rwlog, err := db.GetRwlogsByruandyonghuid(userid, renwuid)
 	if err != nil {
 		return nil, err
 	}
-	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, userid, renwuid), string(renwlogb))
-	if err != nil {
-		return nil, err
-	}
+
 	return rwlog, nil
 
 }
+
+// func (m *RedisSyncToMysqlManager) setRenwulog(rwlog *db.Rwlogs) (interface{}, error) {
+// 	conn := global.REDIS.Get()
+// 	defer conn.Close()
+// 	// update
+// 	renwlogb, err := json.Marshal(&rwlog)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, rwlog.Uid, rwlog.Rid), string(renwlogb))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	m.addUpdate(rwlog)
+// 	return nil, nil
+// }
+
+// func (m *RedisSyncToMysqlManager) getRenwulog(userid int, renwuid int) (*db.Rwlogs, error) {
+// 	conn := global.REDIS.Get()
+// 	defer conn.Close()
+
+// 	rwlog := &db.Rwlogs{}
+
+// 	renwulogStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, userid, renwuid)))
+// 	if err != nil {
+// 		// 走mysql查询
+// 		rwlog, err = db.GetRwlogsByruandyonghuid(userid, renwuid)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	} else {
+// 		if len(renwulogStr) > 0 {
+// 			err = json.Unmarshal([]byte(renwulogStr), &rwlog)
+// 			if err != nil {
+// 				return nil, err
+// 			}
+// 			// return rwlog, nil
+// 		}
+// 	}
+
+// 	// update
+// 	renwlogb, err := json.Marshal(&rwlog)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	_, err = conn.Do("set", fmt.Sprintf("%v_%v_%v", global.REDIS_PREFIX_RENWU_LOG, userid, renwuid), string(renwlogb))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return rwlog, nil
+
+// }
