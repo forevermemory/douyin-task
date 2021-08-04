@@ -43,8 +43,8 @@ func RunRedisSyncToMysqlManager() {
 
 	// 注册或者登陆之后再加入内存
 
-	// fmt.Println("加载用户到redis...")
-	// manager.initYonghu()
+	fmt.Println("加载用户到redis...")
+	manager.initYonghu()
 
 	// fmt.Println("加载任务日志到redis...")
 	// manager.initRenwuLog()
@@ -64,18 +64,16 @@ func (m *RedisSyncToMysqlManager) addCreate(v interface{}) {
 
 func (m *RedisSyncToMysqlManager) initYonghu() {
 
-	// get all
-	qu := &db.Yonghu{
-		Page: db.Page{
-			PageSize: 99999999,
-		},
-	}
-	users, err := db.ListYonghu(qu)
+	// 	// `rid`>'0' and `rwjd`=1 and 'rwksTime`>'300'和
+	// `rid`>'0' and `rwjd`=2 and '`rwksTime`>'480'
+
+	users, err := db.ListYonghuV2()
 	if err != nil {
 		return
 	}
 	for _, u := range users {
 		m.yonghuSet[u.Uid] = 1
+		m.setUser(u)
 	}
 }
 

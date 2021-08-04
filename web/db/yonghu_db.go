@@ -158,6 +158,20 @@ func ListYonghu(o *Yonghu) ([]*Yonghu, error) {
 	return res, err
 }
 
+// ListYonghuV2
+func ListYonghuV2() ([]*Yonghu, error) {
+	db := global.MYSQL
+	res := make([]*Yonghu, 0)
+
+	// 	// `rid`>'0' and `rwjd`=1 and 'rwksTime`>'300'和
+	// `rid`>'0' and `rwjd`=2 and '`rwksTime`>'480'
+
+	now := time.Now().Unix()
+	sql := `select * from  yonghu  where (rid>0 and rwjd=1 and (rwksTime - ?) > 300 ) or  (rid>0 and rwjd=2 and (rwksTime - ?) > 480) `
+	err := db.Raw(sql, now, now).Scan(&res).Error
+	return res, err
+}
+
 // CountYonghu 条件数量
 func CountYonghu(o *Yonghu) (int, error) {
 	db := global.MYSQL
