@@ -1,10 +1,8 @@
 package service
 
 import (
-	"douyin/global"
 	"douyin/web/db"
 	"fmt"
-	"time"
 
 	"github.com/robfig/cron"
 )
@@ -53,64 +51,24 @@ func (t *Task) task1() (interface{}, error) {
 	// 和任务进度2 也就是领了任务在送礼物  超过8分钟的
 	// 用户取消任务  因为超时了
 
-	conn := global.REDIS.Get()
-	defer conn.Close()
-
-	for userid := range manager.yonghuSet {
-
-		// user
-		user, err := manager.getUser(userid)
+	users, err := db.ListYonghuV2()
+	if err != nil {
+		return nil, err
+	}
+	for _, user := range users {
+		user.Rwjd = -1
+		user.Rid = -1
+		// renwulog
+		rwlog, err := manager.getRenwulog(user.Uid, user.Rid)
 		if err != nil {
 			continue
 		}
-		// 领了任务超过5分钟的
-		// 还有就是用户5分钟内做这个任务失败了 下次就不让他领取这个任务
-		if user.Rwjd == 2 {
-			if int(time.Now().Unix())-user.Rwkstime > 60*5 {
-				////////////////////
-				user.Rwjd = -1
-				user.Rid = -1
-				// 更新到任务log
+		/////////////
+		rwlog.Isadd = db.Rwlogs_isadd_ABADON_TASK_NOT_IN
+		/////////////
 
-				// renwulog
-				rwlog, err := manager.getRenwulog(user.Uid, user.Rid)
-				if err != nil {
-					continue
-				}
-				/////////////
-				rwlog.Isadd = db.Rwlogs_isadd_ABADON_TASK_NOT_IN
-				/////////////
-
-				manager.setUser(user)
-				manager.setRenwulog(rwlog)
-			}
-
-			continue
-		}
-
-		// 任务进度2 也就是领了任务在送礼物  超过8分钟的
-		if user.Rwjd == 3 {
-			if int(time.Now().Unix())-user.Rwkstime > 60*8 {
-				////////////////////
-				user.Rwjd = -1
-				user.Rid = -1
-				///////////////////
-				// renwulog
-				rwlog, err := manager.getRenwulog(user.Uid, user.Rid)
-				if err != nil {
-					continue
-				}
-				/////////////
-				rwlog.Isadd = db.Rwlogs_isadd_ABADON_TASK_EXCEPT_EIGHT_MIN
-				/////////////
-
-				manager.setRenwulog(rwlog)
-				manager.setUser(user)
-			}
-
-			continue
-		}
-
+		manager.setUser(user)
+		manager.setRenwulog(rwlog)
 	}
 
 	return nil, nil

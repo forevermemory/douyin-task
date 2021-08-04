@@ -64,10 +64,8 @@ func (m *RedisSyncToMysqlManager) addCreate(v interface{}) {
 
 func (m *RedisSyncToMysqlManager) initYonghu() {
 
-	// 	// `rid`>'0' and `rwjd`=1 and 'rwksTime`>'300'和
-	// `rid`>'0' and `rwjd`=2 and '`rwksTime`>'480'
-
-	users, err := db.ListYonghuV2()
+	// 刚启动加载用户列表 只需要把onlie>0的加载就行了
+	users, err := db.ListYonghuV3()
 	if err != nil {
 		return
 	}
