@@ -67,6 +67,10 @@ func Top2(req *db.YonghuRequest) (interface{}, error) {
 	// redis ...
 	manager.setUser(user)
 
+	// 登陆之后 再加入
+	// add yonghu set
+	manager.yonghuSet[user.Uid] = 1
+
 	// response
 	res := db.YonghuResponse{
 		Msg:           1,
@@ -130,6 +134,9 @@ func Top5(req *db.YonghuRequest) (interface{}, error) {
 	///////////////////////////
 
 	manager.setUser(user)
+	// 登陆之后 再加入
+	// add yonghu set
+	manager.yonghuSet[user.Uid] = 1
 
 	// response
 	res := db.YonghuResponse{

@@ -41,8 +41,10 @@ func RunRedisSyncToMysqlManager() {
 	fmt.Println("加载任务到redis...")
 	manager.initRenwu()
 
-	fmt.Println("加载用户到redis...")
-	manager.initYonghu()
+	// 注册或者登陆之后再加入内存
+
+	// fmt.Println("加载用户到redis...")
+	// manager.initYonghu()
 
 	// fmt.Println("加载任务日志到redis...")
 	// manager.initRenwuLog()
