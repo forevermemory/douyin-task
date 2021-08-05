@@ -126,6 +126,8 @@ type Renwu struct {
 	// Lqzbyc        int `gorm:"column:lqzbyc" json:"lqzbyc" form:"lqzbyc"`                               //一天只能领取那个主播任务一次 0 否 1是
 	// Ipsync        int `gorm:"column:ipsync" json:"ipsync" form:"ipsync"`                               //  同ip只能进多少台
 
+	UpdateType int `gorm:"-" json:"-" form:"-"`
+
 	Page
 }
 
@@ -158,13 +160,33 @@ func AddRenwu(o *Renwu, tx ...*gorm.DB) (*Renwu, error) {
 	return o, err
 }
 
+const (
+	RENWU_UPDATE_ALL               int = 1
+	RENWU_UPDATE_Shengyusl         int = 2
+	RENWU_UPDATE_STOP_Tiqianjieshu int = 3
+	RENWU_UPDATE_MIDDLE_4          int = 4
+)
+
 // UpdateRenwu 修改
-func UpdateRenwu(o *Renwu, tx ...*gorm.DB) (*Renwu, error) {
+func UpdateRenwu(o *Renwu, _type int) (*Renwu, error) {
 	db := global.MYSQL
-	if len(tx) > 0 {
-		db = tx[0]
+
+	u2 := new(Renwu)
+
+	switch _type {
+	case RENWU_UPDATE_ALL:
+		u2 = o
+		u2.Rid = 0
+	case RENWU_UPDATE_Shengyusl:
+		u2.Shengyusl = o.Shengyusl
+	case RENWU_UPDATE_STOP_Tiqianjieshu:
+		u2.Tiqianjieshu = o.Tiqianjieshu
+		u2.Stop = o.Stop
+	case RENWU_UPDATE_MIDDLE_4:
+
 	}
-	err := db.Table("renwu").Where("Rid=?", o.Rid).Update(o).Error
+
+	err := db.Table("renwu").Where("Rid=?", o.Rid).Updates(u2).Error
 	return o, err
 }
 

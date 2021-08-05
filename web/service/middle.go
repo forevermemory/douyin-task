@@ -7,11 +7,6 @@ import (
 	"time"
 )
 
-// Middle501 任务暂停 暂停任务，即使有剩余数量设备也不能获取该任务。
-func Middle501(req *db.RenwuRequest) (interface{}, error) {
-	return nil, nil
-}
-
 // Middle5 任务操作：5 主播提前下播
 // 任务 tqjs+1 到达一定数量检测 并且暂停任务stop=1
 func Middle5(req *db.RenwuRequest) (interface{}, error) {
@@ -30,6 +25,7 @@ func Middle5(req *db.RenwuRequest) (interface{}, error) {
 	renwu.Stop = 1
 	/////////////////////////////
 	// update
+	renwu.UpdateType = db.RENWU_UPDATE_STOP_Tiqianjieshu
 	manager.setRenwu(renwu)
 
 	return nil, nil
@@ -85,8 +81,11 @@ func Middle4(req *db.RenwuRequest) (interface{}, error) {
 	user.Rwjd = -1
 	/////////////////////////////
 	// update
+	renwu.UpdateType = db.RENWU_UPDATE_Shengyusl
 	manager.setRenwu(renwu)
+	user.UpdateType = db.USER_UPDATE_ONLY_RIDAND_RWID
 	manager.setUser(user)
+	rwlog.UpdateType = db.LOG_UPDATE_ISADD
 	manager.setRenwulog(rwlog)
 
 	return nil, nil
@@ -122,6 +121,8 @@ func Middle3(req *db.RenwuRequest) (interface{}, error) {
 	}
 	shangji.Money += int(renwu.Rwmoney / 10)
 	/////////////////////////////
+	user.UpdateType = db.USER_UPDATE_MONEY
+	shangji.UpdateType = db.USER_UPDATE_MONEY
 	manager.setUser(user)
 	manager.setUser(shangji)
 
@@ -147,6 +148,7 @@ func Middle2(req *db.RenwuRequest) (interface{}, error) {
 	user.Rwkstime = int(time.Now().Unix())
 	/////////////////////////////
 	// update
+	user.UpdateType = db.USER_UPDATE_ONLY_RWID_RWKSSJ
 	manager.setUser(user)
 
 	return nil, nil
@@ -177,6 +179,7 @@ func Middle1(req *db.RenwuRequest) (interface{}, error) {
 	user.Rwkstime = int(time.Now().Unix())
 	/////////////////////////////
 	// update
+	user.UpdateType = db.USER_UPDATE_ONLY_RWID
 	manager.setUser(user)
 
 	return nil, nil

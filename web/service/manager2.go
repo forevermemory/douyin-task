@@ -53,7 +53,7 @@ func (m *RedisSyncToMysqlManager) delRenwu(renwu *db.Renwu) (interface{}, error)
 	delete(manager.renwuIDSet, renwu.Rid)
 	return nil, nil
 }
-func (m *RedisSyncToMysqlManager) setRenwu(renwu *db.Renwu) (interface{}, error) {
+func (m *RedisSyncToMysqlManager) setRenwu(renwu *db.Renwu, isinit ...int) (interface{}, error) {
 	conn := global.REDIS.Get()
 	defer conn.Close()
 	// update
@@ -69,7 +69,9 @@ func (m *RedisSyncToMysqlManager) setRenwu(renwu *db.Renwu) (interface{}, error)
 	// 更新到内存
 	m.renwuIDSet[renwu.Rid] = renwu
 
-	m.addUpdate(renwu)
+	if len(isinit) == 0 {
+		m.addUpdate(renwu)
+	}
 	return nil, nil
 }
 func (m *RedisSyncToMysqlManager) getRenwu(renwuid int) (*db.Renwu, error) {
@@ -113,7 +115,7 @@ func (m *RedisSyncToMysqlManager) getRenwu(renwuid int) (*db.Renwu, error) {
 
 /////////////user
 
-func (m *RedisSyncToMysqlManager) setUser(user *db.Yonghu) (interface{}, error) {
+func (m *RedisSyncToMysqlManager) setUser(user *db.Yonghu, isinit ...int) (interface{}, error) {
 	conn := global.REDIS.Get()
 	defer conn.Close()
 	// update
@@ -125,7 +127,10 @@ func (m *RedisSyncToMysqlManager) setUser(user *db.Yonghu) (interface{}, error) 
 	if err != nil {
 		return nil, err
 	}
-	m.addUpdate(user)
+	if len(isinit) == 0 {
+
+		m.addUpdate(user)
+	}
 	return nil, nil
 }
 
@@ -172,8 +177,11 @@ func (m *RedisSyncToMysqlManager) getUser(userid int) (*db.Yonghu, error) {
 
 ///////////////rwlog
 
-func (m *RedisSyncToMysqlManager) setRenwulog(rwlog *db.Rwlogs) (interface{}, error) {
-	m.addUpdate(rwlog)
+func (m *RedisSyncToMysqlManager) setRenwulog(rwlog *db.Rwlogs, isinit ...int) (interface{}, error) {
+	if len(isinit) == 0 {
+
+		m.addUpdate(rwlog)
+	}
 	return nil, nil
 }
 

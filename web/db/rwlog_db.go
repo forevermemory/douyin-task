@@ -42,6 +42,9 @@ type Rwlogs struct {
 	Isadd int `gorm:"column:isadd" json:"isadd" form:"isadd"`
 
 	Day time.Time `gorm:"column:day" json:"day" form:"day"`
+
+	UpdateType int `gorm:"-" json:"-" form:"-"`
+
 	Page
 }
 
@@ -82,13 +85,22 @@ func AddRwlogs(o *Rwlogs, tx ...*gorm.DB) (*Rwlogs, error) {
 	return o, err
 }
 
+const (
+	LOG_UPDATE_ISADD int = 1
+)
+
 // UpdateRwlogs 修改
-func UpdateRwlogs(o *Rwlogs, tx ...*gorm.DB) (*Rwlogs, error) {
+func UpdateRwlogs(o *Rwlogs, _type int) (*Rwlogs, error) {
 	db := global.MYSQL
-	if len(tx) > 0 {
-		db = tx[0]
+
+	u2 := new(Rwlogs)
+
+	switch _type {
+	case LOG_UPDATE_ISADD:
+		u2.Isadd = o.Isadd
 	}
-	err := db.Table("rwlogs").Where("id=?", o.Id).Update(o).Error
+
+	err := db.Table("rwlogs").Where("id=?", o.Id).Updates(u2).Error
 	return o, err
 }
 

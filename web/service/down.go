@@ -13,11 +13,11 @@ func Down6(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	//////////////////////////
 	user.Money += req.Money
 	//////////////////////////
 	// update
+	user.UpdateType = db.USER_UPDATE_MONEY
 	manager.setUser(user)
 
 	return nil, nil
@@ -69,6 +69,7 @@ func Down4(req *db.RenwuRequest) (interface{}, error) {
 
 	//////////////////////////
 	// update
+	user.UpdateType = db.USER_UPDATE_DOWN_4
 	manager.setUser(user)
 
 	return nil, nil
@@ -134,6 +135,7 @@ func Down2(req *db.RenwuRequest) (interface{}, error) {
 	}
 	//////////////////////////
 	// update
+	user.UpdateType = db.USER_UPDATE_MONEY
 	manager.setUser(user)
 
 	return nil, nil
@@ -179,6 +181,7 @@ func Down1(req *db.RenwuRequest) (interface{}, error) {
 
 	/////////////////////
 	// update
+	user.UpdateType = db.USER_UPDATE_MONEY
 	manager.setUser(user)
 	for _, son := range tmpSons {
 		// 主要防止转移过程中子账户有任务完成 增加金币
@@ -192,6 +195,8 @@ func Down1(req *db.RenwuRequest) (interface{}, error) {
 		}
 		// 减去旧的
 		stmp.Money = stmp.Money - ts[son.Uid]
+
+		stmp.UpdateType = db.USER_UPDATE_MONEY
 		manager.setUser(stmp)
 	}
 	return nil, nil

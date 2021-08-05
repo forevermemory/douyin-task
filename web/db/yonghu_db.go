@@ -69,6 +69,8 @@ type Yonghu struct {
 
 	Cfdj int `gorm:"column:cfdj" json:"cfdj" form:"cfdj"` // 抖音等级
 
+	UpdateType int `gorm:"-" json:"-" form:"-"`
+
 	Page
 }
 
@@ -120,14 +122,55 @@ func AddYonghu(o *Yonghu, tx ...*gorm.DB) (*Yonghu, error) {
 	return o, err
 }
 
+const (
+	USER_UPDATE_MONEY            int = 1
+	USER_UPDATE_DOWN_4           int = 2
+	USER_UPDATE_TOP2             int = 3
+	USER_UPDATE_TOP5             int = 4
+	USER_UPDATE_ONLY_RID         int = 5
+	USER_UPDATE_ONLY_RWID        int = 6
+	USER_UPDATE_ONLY_RWID_RWKSSJ int = 7
+	USER_UPDATE_ONLY_RIDAND_RWID int = 8
+)
+
 // UpdateYonghu 修改
-func UpdateYonghu(o *Yonghu, tx ...*gorm.DB) (*Yonghu, error) {
+func UpdateYonghu(o *Yonghu, _type int) (*Yonghu, error) {
 	db := global.MYSQL
-	if len(tx) > 0 {
-		db = tx[0]
+
+	u2 := new(Yonghu)
+
+	switch _type {
+	case USER_UPDATE_MONEY:
+		u2.Money = o.Money
+	case USER_UPDATE_DOWN_4:
+		u2.Dyid = o.Dyid
+		u2.Dbye = o.Dbye
+		u2.Ksyz = o.Ksyz
+		u2.Dyyz = o.Dyyz
+		u2.Xtbbh = o.Xtbbh
+		u2.Xtbbh = o.Xtbbh
+		u2.Cfdj = o.Cfdj
+	case USER_UPDATE_TOP2:
+		u2.Token = o.Token
+		u2.Lastloginip = o.Lastloginip
+		u2.Lastlogintime = o.Lastlogintime
+	case USER_UPDATE_TOP5:
+		u2.Lastloginip = o.Lastloginip
+		u2.Lastlogintime = o.Lastlogintime
+	case USER_UPDATE_ONLY_RID:
+		u2.Rid = o.Rid
+	case USER_UPDATE_ONLY_RWID:
+		u2.Rwjd = o.Rwjd
+	case USER_UPDATE_ONLY_RWID_RWKSSJ:
+		u2.Rwjd = o.Rwjd
+		u2.Rwkstime = o.Rwkstime
+	case USER_UPDATE_ONLY_RIDAND_RWID:
+		u2.Rwjd = o.Rwjd
+		u2.Rid = o.Rid
+
 	}
 
-	err := db.Table("yonghu").Where("UID=?", o.Uid).Update(o).Error
+	err := db.Table("yonghu").Where("UID=?", o.Uid).Updates(u2).Error
 	if err != nil {
 		return nil, err
 	}
@@ -180,9 +223,8 @@ func ListYonghuV3() ([]*Yonghu, error) {
 	// 	// `rid`>'0' and `rwjd`=1 and 'rwksTime`>'300'和
 	// `rid`>'0' and `rwjd`=2 and '`rwksTime`>'480'
 
-	now := time.Now().Unix()
 	sql := `select * from  yonghu  where  Onlie>0`
-	err := db.Raw(sql, now, now).Scan(&res).Error
+	err := db.Raw(sql).Scan(&res).Error
 	return res, err
 }
 

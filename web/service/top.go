@@ -65,6 +65,7 @@ func Top2(req *db.YonghuRequest) (interface{}, error) {
 
 	//////////////////////////
 	// redis ...
+	user.UpdateType = db.USER_UPDATE_TOP2
 	manager.setUser(user)
 
 	// 登陆之后 再加入
@@ -132,7 +133,7 @@ func Top5(req *db.YonghuRequest) (interface{}, error) {
 	user.Lastloginip = req.Registerip
 	user.Lastlogintime = time.Now()
 	///////////////////////////
-
+	user.UpdateType = db.USER_UPDATE_TOP5
 	manager.setUser(user)
 	// 登陆之后 再加入
 	// add yonghu set
@@ -198,6 +199,7 @@ func Top101(req *db.AddRenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 	////////////
+	renwu.UpdateType = db.RENWU_UPDATE_ALL
 	manager.setRenwu(renwu)
 
 	return nil, nil
@@ -321,7 +323,9 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	/////////////////////////////
 	// update
 	manager.setIpLimit(req.Ipaddr, toGetRenwu.Rid)
+	toGetRenwu.UpdateType = db.RENWU_UPDATE_Shengyusl
 	manager.setRenwu(toGetRenwu)
+	user.UpdateType = db.USER_UPDATE_ONLY_RID
 	manager.setUser(user)
 
 	// //// response  你根据需求添加或者减少

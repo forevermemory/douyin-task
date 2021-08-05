@@ -71,7 +71,7 @@ func (m *RedisSyncToMysqlManager) initYonghu() {
 	}
 	for _, u := range users {
 		m.yonghuSet[u.Uid] = 1
-		m.setUser(u)
+		m.setUser(u, 1)
 	}
 }
 
@@ -90,7 +90,7 @@ func (m *RedisSyncToMysqlManager) initRenwuLog() {
 	}
 
 	for _, lo := range renwulogss {
-		manager.setRenwulog(lo)
+		manager.setRenwulog(lo, 1)
 	}
 
 }
@@ -105,7 +105,7 @@ func (m *RedisSyncToMysqlManager) initRenwu() {
 
 	}
 	for _, renwu := range renwus {
-		manager.setRenwu(renwu)
+		manager.setRenwu(renwu, 1)
 	}
 
 }
@@ -123,13 +123,13 @@ func (m *RedisSyncToMysqlManager) update_method() {
 
 			if r, ok := data.(*db.Renwu); ok {
 				// 同步任务
-				db.UpdateRenwu(r)
+				db.UpdateRenwu(r, r.UpdateType)
 			} else if u, ok := data.(*db.Yonghu); ok {
 				// 同步数据到用户
-				db.UpdateYonghu(u)
+				db.UpdateYonghu(u, u.UpdateType)
 			} else if u, ok := data.(*db.Rwlogs); ok {
 				// 同步数据到任务日志
-				db.UpdateRwlogs(u)
+				db.UpdateRwlogs(u, u.UpdateType)
 			}
 
 		default:
