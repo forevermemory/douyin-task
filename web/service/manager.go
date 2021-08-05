@@ -1,7 +1,6 @@
 package service
 
 import (
-	"douyin/global"
 	"douyin/web/db"
 	"fmt"
 	"sync"
@@ -51,6 +50,15 @@ func RunRedisSyncToMysqlManager() {
 
 	manager.Run()
 }
+func (m *RedisSyncToMysqlManager) parseTime(t string) time.Time {
+	v, _ := time.Parse("2006-01-02 15:04:05", t)
+
+	return v
+}
+func (m *RedisSyncToMysqlManager) stringfyTime(t time.Time) string {
+	return t.Format("2006-01-02 15:04:05")
+}
+
 func (m *RedisSyncToMysqlManager) Run() {
 	go m.create_method()
 	go m.update_method()
@@ -62,53 +70,6 @@ func (m *RedisSyncToMysqlManager) addCreate(v interface{}) {
 	m.create <- v
 }
 
-func (m *RedisSyncToMysqlManager) initYonghu() {
-
-	// 刚启动加载用户列表 只需要把onlie>0的加载就行了
-	users, err := db.ListYonghuV3()
-	if err != nil {
-		return
-	}
-	for _, u := range users {
-		m.yonghuSet[u.Uid] = 1
-		m.setUser(u, 1)
-	}
-}
-
-func (m *RedisSyncToMysqlManager) initRenwuLog() {
-	conn := global.REDIS.Get()
-	defer conn.Close()
-
-	qu := db.Rwlogs{
-		Page: db.Page{
-			PageSize: 99999999,
-		},
-	}
-	renwulogss, err := db.ListRwlogs(&qu)
-	if err != nil {
-		return
-	}
-
-	for _, lo := range renwulogss {
-		manager.setRenwulog(lo, 1)
-	}
-
-}
-
-func (m *RedisSyncToMysqlManager) initRenwu() {
-	conn := global.REDIS.Get()
-	defer conn.Close()
-
-	// shengyusl
-	renwus, err := db.RenuwuShenyuGreaterZero()
-	if err != nil {
-
-	}
-	for _, renwu := range renwus {
-		manager.setRenwu(renwu, 1)
-	}
-
-}
 func (m *RedisSyncToMysqlManager) update_method() {
 	for {
 		select {

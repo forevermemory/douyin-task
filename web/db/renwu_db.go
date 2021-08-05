@@ -92,35 +92,35 @@ type AddRenwuRequest struct {
 }
 
 type Renwu struct {
-	Rid int `gorm:"column:Rid;primary_key;auto_increment;" json:"Rid" form:"Rid"`
+	Rid int `gorm:"column:Rid;primary_key;auto_increment;" json:"Rid" redis:"Rid"`
 
-	Douyinid     string `gorm:"column:douyinID" json:"douyinID" form:"douyinID"`             //主页ID
-	Zbid         int    `gorm:"column:zbid" json:"zbid" form:"zbid"`                         //直播id
-	Shengyusl    int    `gorm:"column:shengyusl" json:"shengyusl" form:"shengyusl"`          //剩余数量
-	Shichang     int    `gorm:"column:shichang" json:"shichang" form:"shichang"`             //时长 小时
-	Leixing      int    `gorm:"column:leixing" json:"leixing" form:"leixing"`                //任务类型
-	Zhuanshuuid  int    `gorm:"column:zhuanshuUID" json:"zhuanshuUID" form:"zhuanshuUID"`    //指定用户UID放单-可以去掉
-	Zongshuliang int    `gorm:"column:zongshuliang" json:"zongshuliang" form:"zongshuliang"` //总数量
-	Stop         int    `gorm:"column:stop" json:"stop" form:"stop"`                         //0=正常 1=停止
-	Sbcs         int    `gorm:"column:sbcs" json:"sbcs" form:"sbcs"`                         //失败次数
-	Url          string `gorm:"column:url" json:"url" form:"url"`
-	Fangdantime  int    `gorm:"column:fangdantime" json:"fangdantime" form:"fangdantime"` //放单时间
-	Fangdanren   string `gorm:"column:fangdanren" json:"fangdanren" form:"fangdanren"`    //放单人可去掉
-	In           int    `gorm:"column:in" json:"in" form:"in"`                            //进入直播模式
+	Douyinid     string `gorm:"column:douyinID" json:"douyinID" redis:"douyinID"`             //主页ID
+	Zbid         int    `gorm:"column:zbid" json:"zbid" redis:"zbid"`                         //直播id
+	Shengyusl    int    `gorm:"column:shengyusl" json:"shengyusl" redis:"shengyusl"`          //剩余数量
+	Shichang     int    `gorm:"column:shichang" json:"shichang" redis:"shichang"`             //时长 小时
+	Leixing      int    `gorm:"column:leixing" json:"leixing" redis:"leixing"`                //任务类型
+	Zhuanshuuid  int    `gorm:"column:zhuanshuUID" json:"zhuanshuUID" redis:"zhuanshuUID"`    //指定用户UID放单-可以去掉
+	Zongshuliang int    `gorm:"column:zongshuliang" json:"zongshuliang" redis:"zongshuliang"` //总数量
+	Stop         int    `gorm:"column:stop" json:"stop" redis:"stop"`                         //0=正常 1=停止
+	Sbcs         int    `gorm:"column:sbcs" json:"sbcs" redis:"sbcs"`                         //失败次数
+	Url          string `gorm:"column:url" json:"url" redis:"url"`
+	Fangdantime  int    `gorm:"column:fangdantime" json:"fangdantime" redis:"fangdantime"` //放单时间
+	Fangdanren   string `gorm:"column:fangdanren" json:"fangdanren" redis:"fangdanren"`    //放单人可去掉
+	In           int    `gorm:"column:in" json:"in" redis:"in"`                            //进入直播模式
 
-	Tiqianjieshu int `gorm:"column:tiqianjieshu" json:"tiqianjieshu" form:"tiqianjieshu"` //提前结束数量 初始为放单数量一半，当用户反馈提前结束数量-1 数量为负数时用户可提前结束任务
+	Tiqianjieshu int `gorm:"column:tiqianjieshu" json:"tiqianjieshu" redis:"tiqianjieshu"` //提前结束数量 初始为放单数量一半，当用户反馈提前结束数量-1 数量为负数时用户可提前结束任务
 
-	Name          string `gorm:"column:name" json:"name" form:"name"`                            //主播名字
-	Xianghuangche int    `gorm:"column:xianghuangche" json:"xianghuangche" form:"xianghuangche"` //可去掉
-	Biaoshi       string `gorm:"column:biaoshi" json:"biaoshi" form:"biaoshi"`                   //订单号
-	Gsfsp         int    `gorm:"column:gsfsp" json:"gsfsp" form:"gsfsp"`                         //光送粉丝牌-任务条件
-	Dzcs          int    `gorm:"column:dzcs" json:"dzcs" form:"dzcs"`                            //点赞次数
-	Sfsl          int    `gorm:"column:sfsl" json:"sfsl" form:"sfsl"`                            //任务权重 2就是送礼物任务 1就是不送礼物任务
-	Sfgj          int    `gorm:"column:sfgj" json:"sfgj" form:"sfgj"`                            //0=不挂机任务 1=挂机任务
-	Ksqz          int    `gorm:"column:ksqz" json:"ksqz" form:"ksqz"`                            //快手权重-可去掉
-	Rwmoney       int    `gorm:"column:rwmoney" json:"rwmoney" form:"rwmoney"`                   //任务单价
-	Rjbbh         int    `gorm:"column:rjbbh" json:"rjbbh" form:"rjbbh"`                         //任务限制-软件版本号
-	Xtbbh         int    `gorm:"column:xtbbh" json:"xtbbh" form:"xtbbh"`                         //任务限制-系统版本号
+	Name          string `gorm:"column:name" json:"name" redis:"name"`                            //主播名字
+	Xianghuangche int    `gorm:"column:xianghuangche" json:"xianghuangche" redis:"xianghuangche"` //可去掉
+	Biaoshi       string `gorm:"column:biaoshi" json:"biaoshi" redis:"biaoshi"`                   //订单号
+	Gsfsp         int    `gorm:"column:gsfsp" json:"gsfsp" redis:"gsfsp"`                         //光送粉丝牌-任务条件
+	Dzcs          int    `gorm:"column:dzcs" json:"dzcs" redis:"dzcs"`                            //点赞次数
+	Sfsl          int    `gorm:"column:sfsl" json:"sfsl" redis:"sfsl"`                            //任务权重 2就是送礼物任务 1就是不送礼物任务
+	Sfgj          int    `gorm:"column:sfgj" json:"sfgj" redis:"sfgj"`                            //0=不挂机任务 1=挂机任务
+	Ksqz          int    `gorm:"column:ksqz" json:"ksqz" redis:"ksqz"`                            //快手权重-可去掉
+	Rwmoney       int    `gorm:"column:rwmoney" json:"rwmoney" redis:"rwmoney"`                   //任务单价
+	Rjbbh         int    `gorm:"column:rjbbh" json:"rjbbh" redis:"rjbbh"`                         //任务限制-软件版本号
+	Xtbbh         int    `gorm:"column:xtbbh" json:"xtbbh" redis:"xtbbh"`                         //任务限制-系统版本号
 
 	// IsOnlyOneTime int `gorm:"column:is_only_one_time" json:"is_only_one_time" form:"is_only_one_time"` //是否一个用户只能领取一次 0否 1是
 	// Lqzbyc        int `gorm:"column:lqzbyc" json:"lqzbyc" form:"lqzbyc"`                               //一天只能领取那个主播任务一次 0 否 1是
@@ -183,7 +183,8 @@ func UpdateRenwu(o *Renwu, _type int) (*Renwu, error) {
 		u2.Tiqianjieshu = o.Tiqianjieshu
 		u2.Stop = o.Stop
 	case RENWU_UPDATE_MIDDLE_4:
-
+	default:
+		return nil, nil
 	}
 
 	err := db.Table("renwu").Where("Rid=?", o.Rid).Updates(u2).Error

@@ -84,5 +84,6 @@ func initRedis() {
 		}
 		REDIS = pool
 		pool.Get().Close()
+
 	}
 }

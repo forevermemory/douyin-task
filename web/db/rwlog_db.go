@@ -93,14 +93,7 @@ const (
 func UpdateRwlogs(o *Rwlogs, _type int) (*Rwlogs, error) {
 	db := global.MYSQL
 
-	u2 := new(Rwlogs)
-
-	switch _type {
-	case LOG_UPDATE_ISADD:
-		u2.Isadd = o.Isadd
-	}
-
-	err := db.Table("rwlogs").Where("id=?", o.Id).Updates(u2).Error
+	err := db.Table("rwlogs").Where("id=?", o.Id).Update(o).Error
 	return o, err
 }
 

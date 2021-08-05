@@ -85,7 +85,6 @@ func Middle4(req *db.RenwuRequest) (interface{}, error) {
 	manager.setRenwu(renwu)
 	user.UpdateType = db.USER_UPDATE_ONLY_RIDAND_RWID
 	manager.setUser(user)
-	rwlog.UpdateType = db.LOG_UPDATE_ISADD
 	manager.setRenwulog(rwlog)
 
 	return nil, nil

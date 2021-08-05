@@ -35,41 +35,41 @@ type YonghuResponse struct {
 }
 
 type Yonghu struct {
-	Uid int `gorm:"column:UID;primary_key;auto_increment;" json:"UID" form:"UID"`
+	Uid int `gorm:"column:UID;primary_key;auto_increment;" json:"UID" redis:"UID"`
 
-	Account          string    `gorm:"column:Account" json:"Account" form:"Account"` //账号
-	Accountmd5       string    `gorm:"column:AccountMD5" json:"AccountMD5" form:"AccountMD5"`
-	Password         string    `gorm:"column:Password" json:"Password" form:"Password"`
-	Passwordmd5      string    `gorm:"column:PasswordMD5" json:"PasswordMD5" form:"PasswordMD5"`
-	Onlie            int       `gorm:"column:Onlie" json:"Onlie" form:"Onlie"`                                  //websoket句柄
-	Lastlogintime    time.Time `gorm:"column:LastLoginTime" json:"LastLoginTime" form:"LastLoginTime"`          //最后登录时间
-	Lastloginip      string    `gorm:"column:LastLoginIP" json:"LastLoginIP" form:"LastLoginIP"`                //最后登录IP
-	Registertime     time.Time `gorm:"column:RegisterTime" json:"RegisterTime" form:"RegisterTime"`             //注册时间
-	Registerip       string    `gorm:"column:RegisterIP" json:"RegisterIP" form:"RegisterIP"`                   //注册IP
-	State            int       `gorm:"column:State" json:"State" form:"State"`                                  //0=正常 1=冻结
-	Stateinformation string    `gorm:"column:StateInformation" json:"StateInformation" form:"StateInformation"` //状态原因
-	Token            string    `gorm:"column:Token" json:"Token" form:"Token"`
-	Tokentime        int       `gorm:"column:TokenTime" json:"TokenTime" form:"TokenTime"`
-	Guishu           string    `gorm:"column:guishu" json:"guishu" form:"guishu"`             //归属哪个用户
-	Guishuuid        int       `gorm:"column:guishuUID" json:"guishuUID" form:"guishuUID"`    //归属用户uid
-	Shangjiuid       int       `gorm:"column:shangjiUID" json:"shangjiUID" form:"shangjiUID"` //上级uid
-	Rid              int       `gorm:"column:RID" json:"RID" form:"RID"`                      //任务ID
-	Rwkstime         int       `gorm:"column:rwksTime" json:"rwksTime" form:"rwksTime"`       //任务开始时间
-	Rwjd             int       `gorm:"column:rwjd" json:"rwjd" form:"rwjd"`                   //1=正在进直播间 2=正在送礼物 3=正在挂机
-	Dymz             string    `gorm:"column:dymz" json:"dymz" form:"dymz"`                   //可去掉
-	Dyid             string    `gorm:"column:dyid" json:"dyid" form:"dyid"`                   //抖音id
-	Dbye             int       `gorm:"column:dbye" json:"dbye" form:"dbye"`                   //抖币余额
-	Dyyz             int       `gorm:"column:dyyz" json:"dyyz" form:"dyyz"`                   //抖音验证状态0-1
-	Ksyz             int       `gorm:"column:ksyz" json:"ksyz" form:"ksyz"`                   //可去掉
-	Money            int       `gorm:"column:money" json:"money" form:"money"`
-	Zfb              string    `gorm:"column:zfb" json:"zfb" form:"zfb"`             //支付宝
-	Zfbname          string    `gorm:"column:zfbname" json:"zfbname" form:"zfbname"` //支付宝姓名
-	Xtbbh            int       `gorm:"column:xtbbh" json:"xtbbh" form:"xtbbh"`       //系统版本号
-	Rjbbh            int       `gorm:"column:rjbbh" json:"rjbbh" form:"rjbbh"`       //软件版本号
+	Account          string    `gorm:"column:Account" json:"Account" redis:"Account"` //账号
+	Accountmd5       string    `gorm:"column:AccountMD5" json:"AccountMD5" redis:"AccountMD5"`
+	Password         string    `gorm:"column:Password" json:"Password" redis:"Password"`
+	Passwordmd5      string    `gorm:"column:PasswordMD5" json:"PasswordMD5" redis:"PasswordMD5"`
+	Onlie            int       `gorm:"column:Onlie" json:"Onlie" redis:"Onlie"`                                  //websoket句柄
+	Lastlogintime    time.Time `gorm:"column:LastLoginTime" json:"LastLoginTime" redis:"LastLoginTime"`          //最后登录时间
+	Lastloginip      string    `gorm:"column:LastLoginIP" json:"LastLoginIP" redis:"LastLoginIP"`                //最后登录IP
+	Registertime     time.Time `gorm:"column:RegisterTime" json:"RegisterTime" redis:"RegisterTime"`             //注册时间
+	Registerip       string    `gorm:"column:RegisterIP" json:"RegisterIP" redis:"RegisterIP"`                   //注册IP
+	State            int       `gorm:"column:State" json:"State" redis:"State"`                                  //0=正常 1=冻结
+	Stateinformation string    `gorm:"column:Stateinformation" json:"Stateinformation" redis:"Stateinformation"` //状态原因
+	Token            string    `gorm:"column:Token" json:"Token" redis:"Token"`
+	Tokentime        int       `gorm:"column:TokenTime" json:"TokenTime" redis:"TokenTime"`
+	Guishu           string    `gorm:"column:guishu" json:"guishu" redis:"guishu"`             //归属哪个用户
+	Guishuuid        int       `gorm:"column:guishuUID" json:"guishuUID" redis:"guishuUID"`    //归属用户uid
+	Shangjiuid       int       `gorm:"column:shangjiUID" json:"shangjiUID" redis:"shangjiUID"` //上级uid
+	Rid              int       `gorm:"column:RID" json:"RID" redis:"RID"`                      //任务ID
+	Rwkstime         int       `gorm:"column:rwksTime" json:"rwksTime" redis:"rwksTime"`       //任务开始时间
+	Rwjd             int       `gorm:"column:rwjd" json:"rwjd" redis:"rwjd"`                   //1=正在进直播间 2=正在送礼物 3=正在挂机
+	Dymz             string    `gorm:"column:dymz" json:"dymz" redis:"dymz"`                   //可去掉
+	Dyid             string    `gorm:"column:dyid" json:"dyid" redis:"dyid"`                   //抖音id
+	Dbye             int       `gorm:"column:dbye" json:"dbye" redis:"dbye"`                   //抖币余额
+	Dyyz             int       `gorm:"column:dyyz" json:"dyyz" redis:"dyyz"`                   //抖音验证状态0-1
+	Ksyz             int       `gorm:"column:ksyz" json:"ksyz" redis:"ksyz"`                   //可去掉
+	Money            int       `gorm:"column:money" json:"money" redis:"money"`
+	Zfb              string    `gorm:"column:zfb" json:"zfb" redis:"zfb"`             //支付宝
+	Zfbname          string    `gorm:"column:zfbname" json:"zfbname" redis:"zfbname"` //支付宝姓名
+	Xtbbh            int       `gorm:"column:xtbbh" json:"xtbbh" redis:"xtbbh"`       //系统版本号
+	Rjbbh            int       `gorm:"column:rjbbh" json:"rjbbh" redis:"rjbbh"`       //软件版本号
 
-	Cfdj int `gorm:"column:cfdj" json:"cfdj" form:"cfdj"` // 抖音等级
+	Cfdj int `gorm:"column:cfdj" json:"cfdj" redis:"cfdj"` // 抖音等级
 
-	UpdateType int `gorm:"-" json:"-" form:"-"`
+	UpdateType int `gorm:"-" json:"-" redis:"-"`
 
 	Page
 }
@@ -168,6 +168,8 @@ func UpdateYonghu(o *Yonghu, _type int) (*Yonghu, error) {
 		u2.Rwjd = o.Rwjd
 		u2.Rid = o.Rid
 
+	default:
+		return nil, nil
 	}
 
 	err := db.Table("yonghu").Where("UID=?", o.Uid).Updates(u2).Error

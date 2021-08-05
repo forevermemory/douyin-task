@@ -15,8 +15,8 @@ type DataStore struct {
 
 // Page 分页参数
 type Page struct {
-	PageNo   int `gorm:"-" json:"page,default=1,omitempty" form:"page,default=1"`
-	PageSize int `gorm:"-" json:"page_size,default=10,omitempty" form:"page_size,default=10"`
+	PageNo   int `gorm:"-" json:"page,default=1,omitempty" form:"page,default=1" redis:"-"`
+	PageSize int `gorm:"-" json:"page_size,default=10,omitempty" form:"page_size,default=10" redis:"-"`
 }
 
 func SQLMap(rows *sql.Rows) ([]map[string]interface{}, error) {
