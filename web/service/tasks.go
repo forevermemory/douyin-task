@@ -66,7 +66,7 @@ func (t *Task) task1() (interface{}, error) {
 		/////////////
 		rwlog.Isadd = db.Rwlogs_isadd_ABADON_TASK_NOT_IN
 		/////////////
-
+		user.UpdateType = db.USER_UPDATE_ONLY_RIDAND_RWID
 		manager.setUser(user)
 		manager.setRenwulog(rwlog)
 	}

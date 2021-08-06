@@ -4,7 +4,6 @@ import (
 	"douyin/global"
 	"douyin/utils"
 	"douyin/web/db"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -54,60 +53,59 @@ func (m *RedisSyncToMysqlManager) delRenwu(renwu *db.Renwu) (interface{}, error)
 	delete(manager.renwuIDSet, renwu.Rid)
 	return nil, nil
 }
-func (m *RedisSyncToMysqlManager) setRenwu(renwu *db.Renwu, isinit ...int) (interface{}, error) {
+func (m *RedisSyncToMysqlManager) setRenwu(renwu *db.Renwu) (interface{}, error) {
 	conn := global.REDIS.Get()
 	defer conn.Close()
-	// update
-	uy, err := json.Marshal(renwu)
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, renwu.Rid), string(uy))
-	if err != nil {
-		return nil, err
+
+	_key := fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, renwu.Rid)
+
+	switch renwu.UpdateType {
+	case db.RENWU_UPDATE_ALL:
+		m.setRenwu_hsetall(renwu)
+	case db.RENWU_UPDATE_Shengyusl:
+		conn.Do("hset", _key, "Shengyusl", renwu.Shengyusl)
+	case db.RENWU_UPDATE_STOP_Tiqianjieshu:
+		conn.Do("hset", _key, "Tiqianjieshu", renwu.Tiqianjieshu)
+		conn.Do("hset", _key, "Stop", renwu.Stop)
+	default:
+		return nil, nil
 	}
 
 	// 更新到内存
 	m.renwuIDSet[renwu.Rid] = renwu
 
-	if len(isinit) == 0 {
-		m.addUpdate(renwu)
-	}
+	m.addUpdate(renwu)
 	return nil, nil
 }
 func (m *RedisSyncToMysqlManager) getRenwu(renwuid int) (*db.Renwu, error) {
+
 	conn := global.REDIS.Get()
 	defer conn.Close()
 
-	// renwu
+	_key := fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, renwuid)
+	// user
 	renwu := &db.Renwu{}
 
-	renwuStr, err := redis.String(conn.Do("get", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, renwuid)))
+	_, err := conn.Do("hget", _key, "Rid")
 	if err != nil {
+		if !errors.Is(err, redis.ErrNil) {
+			return nil, err
+		}
+		// set
+		// 走mysql查询
 		renwu, err = db.GetRenwuByID(renwuid)
 		if err != nil {
 			return nil, err
 		}
+		m.setRenwu_hsetall(renwu)
+
 	} else {
-		if len(renwuStr) > 0 {
-			err = json.Unmarshal([]byte(renwuStr), renwu)
-			if err != nil {
-				return nil, err
-			}
-			// return renwu, nil
+		renwu, err = m.getRenwu_hgetall(renwuid)
+		if err != nil {
+			return nil, err
 		}
-	}
 
-	// update
-	rb, err := json.Marshal(renwu)
-	if err != nil {
-		return nil, err
 	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, renwuid), string(rb))
-	if err != nil {
-		return nil, err
-	}
-
 	// 更新到内存
 	m.renwuIDSet[renwu.Rid] = renwu
 
@@ -119,15 +117,41 @@ func (m *RedisSyncToMysqlManager) getRenwu(renwuid int) (*db.Renwu, error) {
 func (m *RedisSyncToMysqlManager) setUser(user *db.Yonghu) (interface{}, error) {
 	conn := global.REDIS.Get()
 	defer conn.Close()
-	// update
-	uy, err := json.Marshal(user)
-	if err != nil {
-		return nil, err
+
+	_key := fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, user.Uid)
+
+	switch user.UpdateType {
+	case db.USER_UPDATE_MONEY:
+		conn.Do("hset", _key, "Money", user.Money)
+	case db.USER_UPDATE_DOWN_4:
+		conn.Do("hset", _key, "Dyid", user.Dyid)
+		conn.Do("hset", _key, "Dbye", user.Dbye)
+		conn.Do("hset", _key, "Ksyz", user.Ksyz)
+		conn.Do("hset", _key, "Dyyz", user.Dyyz)
+		conn.Do("hset", _key, "Xtbbh", user.Xtbbh)
+		conn.Do("hset", _key, "Cfdj", user.Cfdj)
+	case db.USER_UPDATE_TOP2:
+		conn.Do("hset", _key, "Token", user.Token)
+		conn.Do("hset", _key, "Lastloginip", user.Lastloginip)
+		conn.Do("hset", _key, "Lastlogintime", m.stringfyTime(user.Lastlogintime))
+	case db.USER_UPDATE_TOP5:
+		conn.Do("hset", _key, "Lastlogintime", m.stringfyTime(user.Lastlogintime))
+		conn.Do("hset", _key, "Lastloginip", user.Lastloginip)
+	case db.USER_UPDATE_ONLY_RID:
+		conn.Do("hset", _key, "Rid", user.Rid)
+	case db.USER_UPDATE_ONLY_RWID:
+		conn.Do("hset", _key, "Rwjd", user.Rwjd)
+	case db.USER_UPDATE_ONLY_RWID_RWKSSJ:
+		conn.Do("hset", _key, "Rwjd", user.Rwjd)
+		conn.Do("hset", _key, "Rwkstime", user.Rwkstime)
+	case db.USER_UPDATE_ONLY_RIDAND_RWID:
+		conn.Do("hset", _key, "Rwjd", user.Rwjd)
+		conn.Do("hset", _key, "Rid", user.Rid)
+
+	default:
+		return nil, nil
 	}
-	_, err = conn.Do("set", fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, user.Uid), string(uy))
-	if err != nil {
-		return nil, err
-	}
+
 	m.addUpdate(user)
 	return nil, nil
 }
@@ -146,7 +170,7 @@ func (m *RedisSyncToMysqlManager) getUser(userid int) (*db.Yonghu, error) {
 	// user
 	user := &db.Yonghu{}
 
-	_, err := conn.Do("hget", _key, "UID")
+	_, err := conn.Do("hget", _key, "Uid")
 	if err != nil {
 		if !errors.Is(err, redis.ErrNil) {
 			return nil, err
@@ -159,6 +183,8 @@ func (m *RedisSyncToMysqlManager) getUser(userid int) (*db.Yonghu, error) {
 			return nil, err
 		}
 		m.setUser_hsetall(user)
+	} else {
+		user, err = m.getUser_hgetall(userid)
 	}
 
 	return user, nil
@@ -167,10 +193,8 @@ func (m *RedisSyncToMysqlManager) getUser(userid int) (*db.Yonghu, error) {
 
 ///////////////rwlog
 
-func (m *RedisSyncToMysqlManager) setRenwulog(rwlog *db.Rwlogs, isinit ...int) (interface{}, error) {
-	if len(isinit) == 0 {
-		m.addUpdate(rwlog)
-	}
+func (m *RedisSyncToMysqlManager) setRenwulog(rwlog *db.Rwlogs) (interface{}, error) {
+	m.addUpdate(rwlog)
 	return nil, nil
 }
 

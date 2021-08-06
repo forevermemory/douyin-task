@@ -36,20 +36,21 @@ func (m *RedisSyncToMysqlManager) getRenwu_hgetall(renwuid int) (*db.Renwu, erro
 	err = redis.ScanStruct(res, u)
 	return u, nil
 }
-func (m *RedisSyncToMysqlManager) getRenwu_hmget(renwuid int, fields []string) (*db.Renwu, error) {
-	conn := global.REDIS.Get()
-	defer conn.Close()
 
-	_key := fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, renwuid)
+// func (m *RedisSyncToMysqlManager) getRenwu_hmget(renwuid int, fields []string) (*db.Renwu, error) {
+// 	conn := global.REDIS.Get()
+// 	defer conn.Close()
 
-	res, err := redis.Values(conn.Do("hmget", _key, fields))
-	if err != nil {
-		return nil, err
-	}
-	u := new(db.Renwu)
-	err = redis.ScanStruct(res, u)
-	return u, nil
-}
+// 	_key := fmt.Sprintf("%v%v", global.REDIS_PREFIX_RENWU, renwuid)
+
+// 	res, err := redis.Values(conn.Do("hmget", _key, fields))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	u := new(db.Renwu)
+// 	err = redis.ScanStruct(res, u)
+// 	return u, nil
+// }
 
 func (m *RedisSyncToMysqlManager) setRenwu_hsetall(renwu *db.Renwu) {
 	conn := global.REDIS.Get()
@@ -130,7 +131,7 @@ func (m *RedisSyncToMysqlManager) setUser_hsetall(user *db.Yonghu) {
 
 	_key := fmt.Sprintf("%v%v", global.REDIS_PREFIX_USER, user.Uid)
 
-	conn.Do("hset", _key, "UID", user.Uid)
+	conn.Do("hset", _key, "Uid", user.Uid)
 	conn.Do("hset", _key, "Account", user.Account)
 	conn.Do("hset", _key, "Accountmd5", user.Accountmd5)
 	conn.Do("hset", _key, "Password", user.Password)
@@ -207,6 +208,17 @@ func (m *RedisSyncToMysqlManager) getUser_hgetall(id int) (*db.Yonghu, error) {
 		return nil, err
 	}
 	u := new(db.Yonghu)
+	// Integer, float, boolean, string and []byte fields are supported
 	err = redis.ScanStruct(res, u)
+
+	// time.Time
+	_Lastlogintime, err := redis.String(conn.Do("hget", _key, "Lastlogintime"))
+	_Registertime, err := redis.String(conn.Do("hget", _key, "Registertime"))
+	if err != nil {
+		return nil, err
+	}
+	u.Lastlogintime = m.parseTime(_Lastlogintime)
+	u.Registertime = m.parseTime(_Registertime)
+
 	return u, nil
 }

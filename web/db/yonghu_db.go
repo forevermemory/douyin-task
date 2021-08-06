@@ -148,7 +148,6 @@ func UpdateYonghu(o *Yonghu, _type int) (*Yonghu, error) {
 		u2.Ksyz = o.Ksyz
 		u2.Dyyz = o.Dyyz
 		u2.Xtbbh = o.Xtbbh
-		u2.Xtbbh = o.Xtbbh
 		u2.Cfdj = o.Cfdj
 	case USER_UPDATE_TOP2:
 		u2.Token = o.Token
