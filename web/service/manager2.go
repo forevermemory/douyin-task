@@ -49,7 +49,6 @@ func (m *RedisSyncToMysqlManager) delRenwu(renwu *db.Renwu) (interface{}, error)
 	if err != nil {
 		return nil, err
 	}
-	//
 	delete(manager.renwuIDSet, renwu.Rid)
 	return nil, nil
 }

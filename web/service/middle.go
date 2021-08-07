@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"douyin/web/db"
 	"errors"
 	"time"
@@ -43,31 +42,13 @@ func Middle4(req *db.RenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 
-	// 加入获取锁超时
-	ctx, _ := context.WithTimeout(context.TODO(), time.Second)
-
-	// 锁
-	for {
-		select {
-		case <-ctx.Done():
-			return nil, errors.New("获取超时")
-		default:
-			break
-
-		}
-		_, ok := manager.renwuLock[renwu.Rid]
-		if ok {
-			// locked
-			continue
-		}
-
-		break
+	exist := manager.getRenwuLock(renwu.Rid)
+	if exist {
+		return nil, errors.New("task is lock")
 	}
-	// unlock --> add lock
-	manager.renwuLock[renwu.Rid] = 1
+
 	defer func() {
-		// unlock
-		delete(manager.renwuLock, renwu.Rid)
+		manager.delRenwuLock(renwu.Rid)
 	}()
 
 	rwlog, err := manager.getRenwulog(user.Uid, user.Rid)

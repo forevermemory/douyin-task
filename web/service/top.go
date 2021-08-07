@@ -275,16 +275,12 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 		// 满足条件的任务////////////////
 		// 获取任务 条件都满足后 进锁 进不去就换下一个任务判断条件
 		// lock 任务
-		_, ok := manager.renwuLock[toGetRenwu.Rid]
-		if ok {
-			// locked
-			continue
+		exist := manager.getRenwuLock(toGetRenwu.Rid)
+		if exist {
+			return nil, errors.New("task is lock")
 		}
-		// unlock --> add lock
-		manager.renwuLock[toGetRenwu.Rid] = 1
 		defer func() {
-			// unlock
-			delete(manager.renwuLock, toGetRenwu.Rid)
+			manager.delRenwuLock(toGetRenwu.Rid)
 		}()
 		toGetRenwu = rw
 		break

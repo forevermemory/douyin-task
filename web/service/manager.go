@@ -14,11 +14,11 @@ var manager = &RedisSyncToMysqlManager{
 	renwuIDSet: make(map[int]*db.Renwu),
 	yonghuSet:  make(map[int]int),
 
-	lock: &sync.Mutex{},
+	rwlock: &sync.Mutex{},
 }
 
 type RedisSyncToMysqlManager struct {
-	lock *sync.Mutex
+	rwlock *sync.Mutex
 	// 同步数据到mysql 任务和用户
 	update chan interface{}
 
@@ -50,9 +50,23 @@ func RunRedisSyncToMysqlManager() {
 
 	manager.Run()
 }
+
+func (m *RedisSyncToMysqlManager) getRenwuLock(rid int) bool {
+	m.rwlock.Lock()
+	defer m.rwlock.Unlock()
+	if _, ok := m.renwuLock[rid]; ok {
+		return true
+	}
+	manager.renwuLock[rid] = 1
+	return false
+}
+func (m *RedisSyncToMysqlManager) delRenwuLock(rid int) {
+	m.rwlock.Lock()
+	defer m.rwlock.Unlock()
+	delete(m.renwuLock, rid)
+}
 func (m *RedisSyncToMysqlManager) parseTime(t string) time.Time {
 	v, _ := time.Parse("2006-01-02 15:04:05", t)
-
 	return v
 }
 func (m *RedisSyncToMysqlManager) stringfyTime(t time.Time) string {

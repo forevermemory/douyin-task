@@ -42,9 +42,9 @@ type Yonghu struct {
 	Password         string    `gorm:"column:Password" json:"Password" redis:"Password"`
 	Passwordmd5      string    `gorm:"column:PasswordMD5" json:"PasswordMD5" redis:"PasswordMD5"`
 	Onlie            int       `gorm:"column:Onlie" json:"Onlie" redis:"Onlie"`                                  //websoket句柄
-	Lastlogintime    time.Time `gorm:"column:LastLoginTime" json:"LastLoginTime" redis:"LastLoginTime"`          //最后登录时间
+	Lastlogintime    time.Time `gorm:"column:LastLoginTime" json:"LastLoginTime" redis:"-"`                      //最后登录时间
 	Lastloginip      string    `gorm:"column:LastLoginIP" json:"LastLoginIP" redis:"LastLoginIP"`                //最后登录IP
-	Registertime     time.Time `gorm:"column:RegisterTime" json:"RegisterTime" redis:"RegisterTime"`             //注册时间
+	Registertime     time.Time `gorm:"column:RegisterTime" json:"RegisterTime" redis:"-"`                        //注册时间
 	Registerip       string    `gorm:"column:RegisterIP" json:"RegisterIP" redis:"RegisterIP"`                   //注册IP
 	State            int       `gorm:"column:State" json:"State" redis:"State"`                                  //0=正常 1=冻结
 	Stateinformation string    `gorm:"column:Stateinformation" json:"Stateinformation" redis:"Stateinformation"` //状态原因
