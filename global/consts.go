@@ -11,9 +11,13 @@ const (
 
 	// renwulogip_${ip}_${renwuid}
 	REDIS_PREFIX_RENWU_IP string = "renwulogip_"
+
+	REDIS_PREFIX_RENWUS string = "renwus_set"
+	REDIS_PREFIX_USERS  string = "users_set"
 )
 
 const (
 	// 同ip只能进多少台
-	MAX_IP_TASK int = 20
+	MAX_IP_TASK          int = 20
+	MAX_GET_LOCK_TIMEOUT int = 5
 )

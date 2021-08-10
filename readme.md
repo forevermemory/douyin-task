@@ -61,4 +61,10 @@ Down1、 我目前服务器是加锁 然后使用 mysql sum 语句统计子账�
 -   1. 把 yonghu 的 rwksTime 字段 无符号去掉
 
 ### 8.6
-- 优化更新指定字段
+
+-   优化更新指定字段
+
+### 8.9
+
+1. 任务锁换成 setnx renuw_id_lock 获取任务时候 setnx 这个任务对应的锁
+2. 有效任务列表放到 redis set

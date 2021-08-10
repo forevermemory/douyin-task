@@ -3,6 +3,7 @@ package service
 import (
 	"douyin/web/db"
 	"fmt"
+	"strconv"
 
 	"github.com/robfig/cron"
 )
@@ -33,7 +34,13 @@ func (t *Task) task2() (interface{}, error) {
 	// 有效任务(shengyusl>0 and stop=0)在程序执行之后已经加载
 	// 是定时清理redis中的数量为0的任务
 
-	for rid := range manager.renwuIDSet {
+	renwuids, err := manager.getRenwuSet()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, rwidStr := range renwuids {
+		rid, _ := strconv.Atoi(rwidStr)
 		renwu, err := manager.getRenwu(rid)
 		if err != nil {
 			continue

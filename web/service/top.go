@@ -35,8 +35,8 @@ func Top1(req *db.YonghuRequest) (interface{}, error) {
 		return nil, err
 	}
 
-	// add yonghu set
-	manager.yonghuSet[user.Uid] = 1
+	// add yonghu to redis set
+	manager.setYonghuSet(user.Uid)
 	return u, nil
 }
 
@@ -69,8 +69,9 @@ func Top2(req *db.YonghuRequest) (interface{}, error) {
 	manager.setUser(user)
 
 	// 登陆之后 再加入
-	// add yonghu set
-	manager.yonghuSet[user.Uid] = 1
+
+	// add yonghu to redis set
+	manager.setYonghuSet(user.Uid)
 
 	// response
 	res := db.YonghuResponse{
@@ -136,8 +137,8 @@ func Top5(req *db.YonghuRequest) (interface{}, error) {
 	user.UpdateType = db.USER_UPDATE_TOP5
 	manager.setUser(user)
 	// 登陆之后 再加入
-	// add yonghu set
-	manager.yonghuSet[user.Uid] = 1
+	// add yonghu to redis set
+	manager.setYonghuSet(user.Uid)
 
 	// response
 	res := db.YonghuResponse{
@@ -231,7 +232,16 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	var toGetRenwu *db.Renwu
 
 	// 遍历redis的所有任务
-	for _, rw := range manager.renwuIDSet {
+	renwuids, err := manager.getRenwuSet()
+	if err != nil {
+		return nil, err
+	}
+	for _, rwidStr := range renwuids {
+		rid, _ := strconv.Atoi(rwidStr)
+		rw, err := manager.getRenwu(rid)
+		if err != nil {
+			continue
+		}
 		// 1. 是否送礼
 		if rw.Sfsl != req.Bdzhqz {
 			continue
@@ -273,18 +283,22 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 			continue
 		}
 		// 满足条件的任务////////////////
-		// 获取任务 条件都满足后 进锁 进不去就换下一个任务判断条件
-		// lock 任务
-		exist := manager.getRenwuLock(toGetRenwu.Rid)
-		if exist {
-			return nil, errors.New("task is lock")
-		}
-		defer func() {
-			manager.delRenwuLock(toGetRenwu.Rid)
-		}()
 		toGetRenwu = rw
 		break
 	}
+	// 满足条件的任务////////////////
+	// 获取任务 条件都满足后 进锁 进不去就换下一个任务判断条件
+	// lock 任务
+	exist, err := manager.getRenwuLock(toGetRenwu.Rid)
+	if err != nil {
+		return nil, err
+	}
+	if exist {
+		return nil, errors.New("task is lock")
+	}
+	defer func() {
+		manager.delRenwuLock(toGetRenwu.Rid)
+	}()
 
 	if toGetRenwu == nil {
 		return nil, errors.New("无满足的任务")

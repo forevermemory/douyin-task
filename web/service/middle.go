@@ -42,7 +42,10 @@ func Middle4(req *db.RenwuRequest) (interface{}, error) {
 		return nil, err
 	}
 
-	exist := manager.getRenwuLock(renwu.Rid)
+	exist, err := manager.getRenwuLock(renwu.Rid)
+	if err != nil {
+		return nil, err
+	}
 	if exist {
 		return nil, errors.New("task is lock")
 	}
