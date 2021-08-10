@@ -293,7 +293,7 @@ func Top1001_110(req *db.RenwuRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	if exist {
+	if !exist {
 		return nil, errors.New("task is lock")
 	}
 	defer func() {
